@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "maths.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 GLuint createShader(
         GLenum shaderType
@@ -12,6 +14,7 @@ GLuint createShader(
 
 typedef struct Paddle {
     Vec3f position;
+
 } Paddle;
 
 Paddle paddle1;
@@ -30,28 +33,40 @@ float movementSpeed = 0.1;
 const GLchar *vertexShaderSource[] = {
     "#version 130\n"
     "in vec3 LVertexPos2D;\n"
+    "in vec2 inTextureCoord;\n"
+    "out vec2 TextCoord;\n"
     "uniform mat4 model;\n"
     "uniform mat4 view;\n"
     "uniform mat4 projection;\n"
     "void main() {\n"
     "   gl_Position = projection * view * model * vec4(LVertexPos2D, 1.0f);\n"
+    "   TextCoord = inTextureCoord;\n"
     "}"
 };
 
 const GLchar *fragmentShaderSource[] = {
     "#version 130\n"
     "out vec4 LFragment;\n"
+    "in vec2 TextCoord;\n"
+    "uniform sampler2D paddleTexture;\n"
     "void main() {\n"
-    "   LFragment = vec4(1.0, 1.0, 1.0, 1.0);\n"
+    "   LFragment = texture(paddleTexture, TextCoord);\n"
+    //"   LFragment = vec4(1.0,1.0,1.0,1.0);\n"
     "}"
 };
 
 // 3D model of paddle
-GLfloat vertices[] =  {-0.5, -0.5, 0.0,
-                    0.5,  -0.5, 0.0,
-                    0.5,  0.5,  0.0,
-                    -0.5, 0.5,  0.0};
-GLuint indices[] = {0, 1, 2, 3};
+GLfloat vertices[] =  {
+    // positions     // texture
+    0.1,  0.5,  0.0, 1.0, 1.0, // top right
+    0.1,  -0.5, 0.0, 1.0, 0.0, // bottom right
+    -0.1, -0.5, 0.0, 0.0, 0.0, // bottom left
+    -0.1, 0.5,  0.0, 0.0, 1.0  // top left
+};
+GLuint indices[] = {
+    0, 1, 3,
+    1, 2, 3,
+};
 
 void fatalError(const char *format, ...) {
     va_list argptr;
@@ -204,10 +219,12 @@ int main(int argc, char *argv[])
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+    GLint inTextureCoordVar = glGetAttribLocation(program, "inTextureCoord");
     GLint vertexVar = glGetAttribLocation(program, "LVertexPos2D");
     GLint modelVar = glGetUniformLocation(program, "model");
     GLint projectionVar = glGetUniformLocation(program, "projection");
     GLint viewVar = glGetUniformLocation(program, "view");
+    GLint paddleTextureVar = glGetUniformLocation(program, "paddleTexture");
 
     GLuint vao;
     GLuint vbo;
@@ -236,11 +253,41 @@ int main(int argc, char *argv[])
             , 3
             , GL_FLOAT
             , GL_FALSE
-            , 3 * sizeof(GLfloat)
+            , 5 * sizeof(float)
             , NULL
     );
 
     glEnableVertexAttribArray(vertexVar);
+
+    glVertexAttribPointer(
+            inTextureCoordVar
+            , 2
+            , GL_FLOAT
+            , GL_FALSE
+            , 5 * sizeof(float)
+            , (void*)(3 * sizeof(float))
+    );
+    glEnableVertexAttribArray(inTextureCoordVar);
+
+    GLuint paddleTexture;
+    glGenTextures(1, &paddleTexture);
+
+    glBindTexture(GL_TEXTURE_2D, paddleTexture);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char *data = stbi_load("paddle.png", &width, &height, &nrChannels, 0);
+    if (!data) {
+        fatalError("stbi_load error.\n");
+    }
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+
+    glUniform1i(paddleTextureVar, paddleTexture);
 
     glBindVertexArray(0);
 
@@ -251,6 +298,7 @@ int main(int argc, char *argv[])
         .y = 0.0,
         .z = -6.0
     };
+    SDL_Log("OpengL: available image units = %d\n",  GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
     while (true) {
         glClearColor(1.0, 0.0, 0.0, 1.0);
@@ -264,9 +312,11 @@ int main(int argc, char *argv[])
         glUniformMatrix4fv(viewVar, 1, false, (GLfloat*)&viewMat);
 
         Mat4f projectionMat;
-        //mat4fIdentity(&projectionMat);
         mat4fPerspective(&projectionMat, fovRadians, screenRatio, zNear, zFar);
         glUniformMatrix4fv(projectionVar, 1, false, (GLfloat*)&projectionMat);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, paddleTexture);
 
         glBindVertexArray(vao);
 
@@ -275,7 +325,7 @@ int main(int argc, char *argv[])
         mat4fVec3fTranslate(&modelMat, &paddle1.position);
         glUniformMatrix4fv(modelVar, 1, false, (GLfloat*)&modelMat);
 
-        glDrawElements(GL_TRIANGLE_FAN, 4, GL_UNSIGNED_INT, NULL);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
         glBindVertexArray(0);
         glUseProgram(0);
