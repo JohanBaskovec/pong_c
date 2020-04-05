@@ -58,10 +58,10 @@ const GLchar *fragmentShaderSource[] = {
 // 3D model of paddle
 GLfloat vertices[] =  {
     // positions     // texture
-    0.1,  0.5,  0.0, 1.0, 1.0, // top right
-    0.1,  -0.5, 0.0, 1.0, 0.0, // bottom right
-    -0.1, -0.5, 0.0, 0.0, 0.0, // bottom left
-    -0.1, 0.5,  0.0, 0.0, 1.0  // top left
+    0.5,  0.5,  0.0, 1.0, 1.0, // top right
+    0.5,  -0.5, 0.0, 1.0, 0.0, // bottom right
+    -0.5, -0.5, 0.0, 0.0, 0.0, // bottom left
+    -0.5, 0.5,  0.0, 0.0, 1.0  // top left
 };
 GLuint indices[] = {
     0, 1, 3,
@@ -320,8 +320,14 @@ int main(int argc, char *argv[])
 
         glBindVertexArray(vao);
 
+        Vec3f rotate = {
+            .x = 1.0,
+            .y = 0.0,
+            .z = 0.0
+        };
         Mat4f modelMat;
         mat4fIdentity(&modelMat);
+        mat4fVec3fRotate(&modelMat, degreesToRadians(-55.0), &rotate);
         mat4fVec3fTranslate(&modelMat, &paddle1.position);
         glUniformMatrix4fv(modelVar, 1, false, (GLfloat*)&modelMat);
 

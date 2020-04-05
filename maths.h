@@ -59,4 +59,17 @@ mat4fPerspective(
         , float zNear
         , float zFar
 );
+
+void
+mat4fMul(Mat4f *a, Mat4f *b);
+
+void
+vec3fNormalize(Vec3f *vec);
+
+float
+vec3fLength(Vec3f *vec);
+
+void
+mat4fVec3fRotate(Mat4f *mat, float angle, Vec3f *vec);
+
 #endif
