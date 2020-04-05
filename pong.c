@@ -23,7 +23,7 @@ Paddle paddle2;
 int screenWidth = 800;
 int screenHeight = 600;
 float screenRatio = 0;
-float fovDegree = 45;
+float fovDegree = 90;
 float fovRadians = 0;
 float movementSpeed = 0.1;
 
@@ -57,11 +57,48 @@ const GLchar *fragmentShaderSource[] = {
 
 // 3D model of paddle
 GLfloat vertices[] =  {
-    // positions     // texture
-    0.5,  0.5,  0.0, 1.0, 1.0, // top right
-    0.5,  -0.5, 0.0, 1.0, 0.0, // bottom right
-    -0.5, -0.5, 0.0, 0.0, 0.0, // bottom left
-    -0.5, 0.5,  0.0, 0.0, 1.0  // top left
+    // positions          // texture
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 GLuint indices[] = {
     0, 1, 3,
@@ -88,6 +125,10 @@ typedef struct PressedKeys {
     bool escape;
     bool up;
     bool down;
+    bool cameraUp;
+    bool cameraDown;
+    bool cameraLeft;
+    bool cameraRight;
 } PressedKeys;
 
 PressedKeys pressedKeys;
@@ -104,6 +145,18 @@ void keyDown(SDL_KeyboardEvent *e) {
         case SDL_SCANCODE_W:
             pressedKeys.up = true;
             break;
+        case SDL_SCANCODE_UP:
+            pressedKeys.cameraUp = true;
+            break;
+        case SDL_SCANCODE_RIGHT:
+            pressedKeys.cameraRight = true;
+            break;
+        case SDL_SCANCODE_DOWN:
+            pressedKeys.cameraDown = true;
+            break;
+        case SDL_SCANCODE_LEFT:
+            pressedKeys.cameraLeft = true;
+            break;
         default:
             SDL_Log("Unsupported key pressed.\n");
     }
@@ -119,6 +172,18 @@ void keyUp(SDL_KeyboardEvent *e) {
             break;
         case SDL_SCANCODE_W:
             pressedKeys.up = false;
+            break;
+        case SDL_SCANCODE_UP:
+            pressedKeys.cameraUp = false;
+            break;
+        case SDL_SCANCODE_RIGHT:
+            pressedKeys.cameraRight = false;
+            break;
+        case SDL_SCANCODE_DOWN:
+            pressedKeys.cameraDown = false;
+            break;
+        case SDL_SCANCODE_LEFT:
+            pressedKeys.cameraLeft = false;
             break;
         default:
             SDL_Log("Unsupported key pressed.\n");
@@ -296,7 +361,7 @@ int main(int argc, char *argv[])
     Vec3f camera = {
         .x = 0.0,
         .y = 0.0,
-        .z = -6.0
+        .z = 6.0
     };
     SDL_Log("OpengL: available image units = %d\n",  GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
@@ -308,7 +373,12 @@ int main(int argc, char *argv[])
 
         Mat4f viewMat;
         mat4fIdentity(&viewMat);
-        mat4fVec3fTranslate(&viewMat, &camera);
+        Vec3f cameraDiff = {
+            .x = -camera.x,
+            .y = -camera.y,
+            .z = -camera.z,
+        };
+        mat4fVec3fTranslate(&viewMat, &cameraDiff);
         glUniformMatrix4fv(viewVar, 1, false, (GLfloat*)&viewMat);
 
         Mat4f projectionMat;
@@ -327,11 +397,11 @@ int main(int argc, char *argv[])
         };
         Mat4f modelMat;
         mat4fIdentity(&modelMat);
-        mat4fVec3fRotate(&modelMat, degreesToRadians(-55.0), &rotate);
+        mat4fVec3fRotate(&modelMat, SDL_GetTicks() * degreesToRadians(-0.1), &rotate);
         mat4fVec3fTranslate(&modelMat, &paddle1.position);
         glUniformMatrix4fv(modelVar, 1, false, (GLfloat*)&modelMat);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glBindVertexArray(0);
         glUseProgram(0);
@@ -360,6 +430,15 @@ int main(int argc, char *argv[])
             paddle1.position.y += movementSpeed;
         } else if (pressedKeys.down) {
             paddle1.position.y -= movementSpeed;
+        }
+        if (pressedKeys.cameraUp) {
+            camera.y += 0.2;
+        } else if (pressedKeys.cameraDown) {
+            camera.y -= 0.2;
+        } else if (pressedKeys.cameraLeft) {
+            camera.x -= 0.2;
+        } else if (pressedKeys.cameraRight) {
+            camera.x += 0.2;
         }
 
     }
