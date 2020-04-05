@@ -12,6 +12,12 @@ GLuint createShader(
         , GLuint program
 );
 
+void
+updateCameraVector();
+
+void
+mouseMove(SDL_MouseMotionEvent e);
+
 typedef struct Paddle {
     Vec3f position;
 
@@ -26,6 +32,7 @@ float screenRatio = 0;
 float fovDegree = 90;
 float fovRadians = 0;
 float movementSpeed = 0.1;
+float mouseSensitivity = 0.1f;
 
 #define zNear 0.1
 #define zFar 100.0
@@ -51,7 +58,6 @@ const GLchar *fragmentShaderSource[] = {
     "uniform sampler2D paddleTexture;\n"
     "void main() {\n"
     "   LFragment = texture(paddleTexture, TextCoord);\n"
-    //"   LFragment = vec4(1.0,1.0,1.0,1.0);\n"
     "}"
 };
 
@@ -129,6 +135,8 @@ typedef struct PressedKeys {
     bool cameraDown;
     bool cameraLeft;
     bool cameraRight;
+    bool cameraFront;
+    bool cameraBack;
 } PressedKeys;
 
 PressedKeys pressedKeys;
@@ -146,13 +154,15 @@ void keyDown(SDL_KeyboardEvent *e) {
             pressedKeys.up = true;
             break;
         case SDL_SCANCODE_UP:
-            pressedKeys.cameraUp = true;
+            //pressedKeys.cameraUp = true;
+            pressedKeys.cameraFront = true;
             break;
         case SDL_SCANCODE_RIGHT:
             pressedKeys.cameraRight = true;
             break;
         case SDL_SCANCODE_DOWN:
-            pressedKeys.cameraDown = true;
+            //pressedKeys.cameraDown = true;
+            pressedKeys.cameraBack = true;
             break;
         case SDL_SCANCODE_LEFT:
             pressedKeys.cameraLeft = true;
@@ -162,7 +172,8 @@ void keyDown(SDL_KeyboardEvent *e) {
     }
 }
 
-void keyUp(SDL_KeyboardEvent *e) {
+void
+keyUp(SDL_KeyboardEvent *e) {
     switch (e->keysym.scancode) {
         case SDL_SCANCODE_ESCAPE:
             pressedKeys.escape = false;
@@ -174,13 +185,15 @@ void keyUp(SDL_KeyboardEvent *e) {
             pressedKeys.up = false;
             break;
         case SDL_SCANCODE_UP:
-            pressedKeys.cameraUp = false;
+            //pressedKeys.cameraUp = false;
+            pressedKeys.cameraFront = false;
             break;
         case SDL_SCANCODE_RIGHT:
             pressedKeys.cameraRight = false;
             break;
         case SDL_SCANCODE_DOWN:
-            pressedKeys.cameraDown = false;
+            //pressedKeys.cameraDown = false;
+            pressedKeys.cameraBack = false;
             break;
         case SDL_SCANCODE_LEFT:
             pressedKeys.cameraLeft = false;
@@ -205,36 +218,39 @@ openglDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 typedef struct Camera {
     Vec3f position;
     Vec3f direction;
+    Vec3f front;
     Vec3f target;
     Vec3f right;
     Vec3f up;
+    float roll;
+    float pitch;
+    float yaw;
 } Camera;
 
 Camera camera;
 
-int main(int argc, char *argv[])
-{
+Vec3f worldUp = {
+    .x = 0.0,
+    .y = 1.0,
+    .z = 0.0
+};
+
+int main(int argc, char *argv[]) {
+    camera.yaw = -90.0;
+    camera.pitch = 0.0;
+
     camera.position.x = 0.0;
     camera.position.y = 0.0;
-    camera.position.z = 6.0;
+    camera.position.z = 3.0;
 
-    camera.target.x = 0.0;
-    camera.target.y = 0.0;
-    camera.target.z = 0.0;
-
-    camera.direction = camera.position;
-    vec3fSub(&camera.direction, &camera.target);
-    vec3fNormalize(&camera.direction);
+    camera.front.x = 0.0;
+    camera.front.y = 0.0;
+    camera.front.z = -1.0;
 
     camera.up.x = 0.0;
     camera.up.y = 1.0;
     camera.up.z = 0.0;
-
-    camera.right = camera.up;
-    vec3fCrossProduct(&camera.right, &camera.direction);
-    vec3fNormalize(&camera.right);
-
-    vec3fCrossProduct(&camera.direction, &camera.right);
+    updateCameraVector();
 
     screenRatio = (screenWidth * 1.0) / screenHeight;
     fovRadians = degreesToRadians(fovDegree);
@@ -369,10 +385,10 @@ int main(int argc, char *argv[])
     glGenTextures(1, &paddleTexture);
 
     glBindTexture(GL_TEXTURE_2D, paddleTexture);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load("paddle.png", &width, &height, &nrChannels, 0);
@@ -387,9 +403,9 @@ int main(int argc, char *argv[])
 
     glBindVertexArray(0);
 
-    SDL_Event e;
 
     SDL_Log("OpengL: available image units = %d\n",  GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+    SDL_SetRelativeMouseMode(true);
 
     while (true) {
         glClearColor(1.0, 0.0, 0.0, 1.0);
@@ -398,27 +414,10 @@ int main(int argc, char *argv[])
         glUseProgram(program);
 
         Mat4f viewMat;
-        float radius = 5.0;
-        float ticks = SDL_GetTicks();
-        float camX = sin(ticks / 5000.0) * radius;
-        float camZ = cos(ticks / 5000.0) * radius;
-        Vec3f camera2 = {
-            .x = camX,
-            .y = 0.0,
-            .z = camZ
-        };
-        Vec3f target2 = {
-            .x = 0.0,
-            .y = 0.0,
-            .z = 0.0
-        };
-        Vec3f up2 = {
-            .x = 0.0,
-            .y = 1.0,
-            .z = 0.0
-        };
         //Mat4f view;
-        mat4fLookAt(&viewMat, &camera2, &target2, &up2);
+        camera.target = camera.position;
+        vec3fAdd(&camera.target, &camera.front);
+        mat4fLookAt(&viewMat, &camera.position, &camera.target, &camera.up);
         glUniformMatrix4fv(viewVar, 1, false, (GLfloat*)&viewMat);
 
         Mat4f projectionMat;
@@ -447,20 +446,25 @@ int main(int argc, char *argv[])
         glUseProgram(0);
         SDL_GL_SwapWindow(window);
 
-        SDL_PollEvent(&e);
-        switch (e.type) {
-            case SDL_QUIT:
-                goto end;
-                break;
-            case SDL_KEYDOWN:
-                keyDown(&e.key);
-                break;
-            case SDL_KEYUP:
-                keyUp(&e.key);
-                break;
-            default:
-                // do nothing
-                break;
+        SDL_Event e;
+        while(SDL_PollEvent(&e)) {
+            switch (e.type) {
+                case SDL_QUIT:
+                    goto end;
+                    break;
+                case SDL_KEYDOWN:
+                    keyDown(&e.key);
+                    break;
+                case SDL_KEYUP:
+                    keyUp(&e.key);
+                    break;
+                case SDL_MOUSEMOTION:
+                    mouseMove(e.motion);
+                    break;
+                default:
+                    // do nothing
+                    break;
+            }
         }
 
         if (pressedKeys.escape) {
@@ -475,10 +479,24 @@ int main(int argc, char *argv[])
             camera.position.y += 0.2;
         } else if (pressedKeys.cameraDown) {
             camera.position.y -= 0.2;
-        } else if (pressedKeys.cameraLeft) {
-            camera.position.x -= 0.2;
+        }
+        if (pressedKeys.cameraBack) {
+            camera.position.x -= movementSpeed * camera.front.x;
+            camera.position.y -= movementSpeed * camera.front.y;
+            camera.position.z -= movementSpeed * camera.front.z;
+        } else if (pressedKeys.cameraFront) {
+            camera.position.x += movementSpeed * camera.front.x;
+            camera.position.y += movementSpeed * camera.front.y;
+            camera.position.z += movementSpeed * camera.front.z;
+        }
+        if (pressedKeys.cameraLeft) {
+            camera.position.x -= movementSpeed * camera.right.x;
+            camera.position.y -= movementSpeed * camera.right.y;
+            camera.position.z -= movementSpeed * camera.right.z;
         } else if (pressedKeys.cameraRight) {
-            camera.position.x += 0.2;
+            camera.position.x += movementSpeed * camera.right.x;
+            camera.position.y += movementSpeed * camera.right.y;
+            camera.position.z += movementSpeed * camera.right.z;
         }
 
     }
@@ -518,3 +536,33 @@ GLuint createShader(
     return 0;
 }
 
+
+void
+mouseMove(SDL_MouseMotionEvent e) {
+    float xOffset = e.xrel * mouseSensitivity;
+    float yOffset = -e.yrel * mouseSensitivity;
+    printf("%f %f\n", xOffset, yOffset);
+    camera.yaw += xOffset;
+    camera.pitch += yOffset;
+    updateCameraVector();
+}
+
+void
+updateCameraVector() {
+    float yawRad = degreesToRadians(camera.yaw);
+    float pitchRad = degreesToRadians(camera.pitch);
+    camera.direction.x = cos(yawRad) * cos(pitchRad);
+    camera.direction.y = sin(pitchRad);
+    camera.direction.z = sin(yawRad) * cos(pitchRad);
+
+    camera.front = camera.direction;
+    vec3fNormalize(&camera.front);
+
+    camera.right = camera.front;
+    vec3fCrossProduct(&camera.right, &worldUp);
+    vec3fNormalize(&camera.right);
+
+    camera.up = camera.right;
+    vec3fCrossProduct(&camera.up, &camera.front);
+    vec3fNormalize(&camera.up);
+}
