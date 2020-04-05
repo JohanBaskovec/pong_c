@@ -202,9 +202,40 @@ openglDebugMessageCallback(GLenum source, GLenum type, GLuint id,
     );
 }
 
+typedef struct Camera {
+    Vec3f position;
+    Vec3f direction;
+    Vec3f target;
+    Vec3f right;
+    Vec3f up;
+} Camera;
+
+Camera camera;
 
 int main(int argc, char *argv[])
 {
+    camera.position.x = 0.0;
+    camera.position.y = 0.0;
+    camera.position.z = 6.0;
+
+    camera.target.x = 0.0;
+    camera.target.y = 0.0;
+    camera.target.z = 0.0;
+
+    camera.direction = camera.position;
+    vec3fSub(&camera.direction, &camera.target);
+    vec3fNormalize(&camera.direction);
+
+    camera.up.x = 0.0;
+    camera.up.y = 1.0;
+    camera.up.z = 0.0;
+
+    camera.right = camera.up;
+    vec3fCrossProduct(&camera.right, &camera.direction);
+    vec3fNormalize(&camera.right);
+
+    vec3fCrossProduct(&camera.direction, &camera.right);
+
     screenRatio = (screenWidth * 1.0) / screenHeight;
     fovRadians = degreesToRadians(fovDegree);
     int err = SDL_Init(SDL_INIT_VIDEO);
@@ -358,11 +389,6 @@ int main(int argc, char *argv[])
 
     SDL_Event e;
 
-    Vec3f camera = {
-        .x = 0.0,
-        .y = 0.0,
-        .z = 6.0
-    };
     SDL_Log("OpengL: available image units = %d\n",  GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
     while (true) {
@@ -372,13 +398,27 @@ int main(int argc, char *argv[])
         glUseProgram(program);
 
         Mat4f viewMat;
-        mat4fIdentity(&viewMat);
-        Vec3f cameraDiff = {
-            .x = -camera.x,
-            .y = -camera.y,
-            .z = -camera.z,
+        float radius = 5.0;
+        float ticks = SDL_GetTicks();
+        float camX = sin(ticks / 5000.0) * radius;
+        float camZ = cos(ticks / 5000.0) * radius;
+        Vec3f camera2 = {
+            .x = camX,
+            .y = 0.0,
+            .z = camZ
         };
-        mat4fVec3fTranslate(&viewMat, &cameraDiff);
+        Vec3f target2 = {
+            .x = 0.0,
+            .y = 0.0,
+            .z = 0.0
+        };
+        Vec3f up2 = {
+            .x = 0.0,
+            .y = 1.0,
+            .z = 0.0
+        };
+        //Mat4f view;
+        mat4fLookAt(&viewMat, &camera2, &target2, &up2);
         glUniformMatrix4fv(viewVar, 1, false, (GLfloat*)&viewMat);
 
         Mat4f projectionMat;
@@ -432,13 +472,13 @@ int main(int argc, char *argv[])
             paddle1.position.y -= movementSpeed;
         }
         if (pressedKeys.cameraUp) {
-            camera.y += 0.2;
+            camera.position.y += 0.2;
         } else if (pressedKeys.cameraDown) {
-            camera.y -= 0.2;
+            camera.position.y -= 0.2;
         } else if (pressedKeys.cameraLeft) {
-            camera.x -= 0.2;
+            camera.position.x -= 0.2;
         } else if (pressedKeys.cameraRight) {
-            camera.x += 0.2;
+            camera.position.x += 0.2;
         }
 
     }

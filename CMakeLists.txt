@@ -5,10 +5,11 @@ project(Pong)
 set(CMAKE_C_STANDARD 11)
 add_definitions(
         -D_FORTIFY_SOURCE=2
-        -O2
+        -O0
         -Wall
         -Werror
         -Wno-unused-variable
+        -g
 )
 
 find_package(SDL2 REQUIRED)
