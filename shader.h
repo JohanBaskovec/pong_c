@@ -21,6 +21,7 @@ typedef struct CubeProgram {
     GLint objectColor;
     GLint lightColor;
     GLint lightPosition;
+    GLint cameraPosition;
 } CubeProgram;
 
 

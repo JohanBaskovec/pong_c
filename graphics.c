@@ -210,6 +210,7 @@ graphicsRender() {
     glUniform3fv(cubeProgram.lightColor, 1, lightColor);
 
     glUniform3fv(cubeProgram.lightPosition, 1, (GLfloat*)&lightPos);
+    glUniform3fv(cubeProgram.cameraPosition, 1, (GLfloat*)&camera.position);
     /*
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, paddleTexture);

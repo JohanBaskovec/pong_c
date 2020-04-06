@@ -108,8 +108,8 @@ getAttribLocation(GLuint program, char const *name) {
 }
 #define TO_STR(a) TO_STR2(a)
 #define TO_STR2(a) #a
-#define SET_UNIFORM(name) p.name = getUniformLocation(p.id, TO_STR(#name));
-#define SET_ATTRIB(name) p.name = getAttribLocation(p.id, TO_STR(#name));
+#define SET_UNIFORM(name) p.name = getUniformLocation(p.id, #name);
+#define SET_ATTRIB(name) p.name = getAttribLocation(p.id, #name);
 
 CubeProgram
 cubeProgramCreate() {
@@ -118,18 +118,16 @@ cubeProgramCreate() {
     p.id = programCreate("cube.vs", "cube.fs");
     glUseProgram(p.id);
 
-    p.aPos = getAttribLocation(p.id, "aPos");
-    p.aNormal = getAttribLocation(p.id, "aNormal");
-    //SET_ATTRIB(aNormal);
+    SET_ATTRIB(aPos);
+    SET_ATTRIB(aNormal);
 
-    p.model = getUniformLocation(p.id, "model");
-    p.projection = getUniformLocation(p.id, "projection");
-    p.view = getUniformLocation(p.id, "view");
-
-    p.objectColor = getUniformLocation(p.id, "objectColor");
-    p.lightColor = getUniformLocation(p.id, "lightColor");
-    p.lightPosition = getUniformLocation(p.id, "lightPosition");
-    //SET_UNIFORM(lightPosition);
+    SET_UNIFORM(model);
+    SET_UNIFORM(projection);
+    SET_UNIFORM(view);
+    SET_UNIFORM(objectColor);
+    SET_UNIFORM(lightColor);
+    SET_UNIFORM(lightPosition);
+    SET_UNIFORM(cameraPosition);
 
     glUseProgram(0);
     SDL_Log("Cube program created.\n");

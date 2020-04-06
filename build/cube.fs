@@ -7,6 +7,7 @@ out vec4 FragColor;
 uniform vec3 objectColor;
 uniform vec3 lightColor;
 uniform vec3 lightPosition;
+uniform vec3 cameraPosition;
 
 void main()
 {
@@ -18,6 +19,13 @@ void main()
     float ambientStrength = 0.1;
     vec3 ambient = ambientStrength * lightColor;
 
-    vec3 result = (ambient + diffuse) * objectColor;
+
+    float specularStrength = 0.5;
+    vec3 cameraDirection = normalize(cameraPosition - FragPos);
+    vec3 reflectDirection = reflect(-lightDir, norm);
+    float spec = pow(max(dot(cameraDirection, reflectDirection), 0.0), 32);
+    vec3 specular = specularStrength * spec * lightColor;
+
+    vec3 result = (ambient + diffuse + specular) * objectColor;
     FragColor = vec4(result, 1.0);
 }
