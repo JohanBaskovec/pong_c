@@ -18,8 +18,16 @@ find_package(OpenGL REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 
 set(SOURCES
-    maths.h
     maths.c
+    graphics.c
+    input.c
+    camera.c
+    world.c
+    shader.c
+    error.c
+    mat4f.c
+    vec3f.c
+    fs.c
 )
 
 add_executable(pong
@@ -32,6 +40,6 @@ add_executable(pong_test
     pong_test.c
     ${SOURCES}
 )
-target_link_libraries(pong_test m)
+target_link_libraries(pong_test ${SDL2_LIBRARIES} ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARIES} m)
 
 
