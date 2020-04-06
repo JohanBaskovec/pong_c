@@ -2,44 +2,52 @@
 #include "vec3f.h"
 
 float
-vec3fLength(Vec3f const *vec) {
-    return sqrt(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
+vec3fLength(Vec3f vec) {
+    return sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 }
 
-void
-vec3fNormalize(Vec3f *vec) {
+Vec3f
+vec3fNormalize(Vec3f vec) {
     float length = vec3fLength(vec);
-    vec->x = vec->x / length;
-    vec->y = vec->y / length;
-    vec->z = vec->z / length;
+    Vec3f ret = {
+        .x = vec.x / length,
+        .y = vec.y / length,
+        .z = vec.z / length
+    };
+    return ret;
 }
 
-
-void
-vec3fAdd(Vec3f *a, Vec3f const *b) {
-    a->x += b->x;
-    a->y += b->y;
-    a->z += b->z;
+Vec3f
+vec3fAdd(Vec3f a, Vec3f b) {
+    Vec3f ret = {
+        .x = a.x + b.x,
+        .y = a.y + b.y,
+        .z = a.z + b.z
+    };
+    return ret;
 }
 
-void
-vec3fSub(Vec3f *a, Vec3f const *b) {
-    a->x -= b->x;
-    a->y -= b->y;
-    a->z -= b->z;
+Vec3f
+vec3fSub(Vec3f a, Vec3f b) {
+    Vec3f ret = {
+        .x = a.x - b.x,
+        .y = a.y - b.y,
+        .z = a.z - b.z
+    };
+    return ret;
 }
 
 float
-vec3fDotProduct(Vec3f const *a, Vec3f const *b) {
-    return a->x * b->x + a->y * b->y + a->z * b->z;
+vec3fDotProduct(Vec3f a, Vec3f b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-void
-vec3fCrossProduct(Vec3f *a, Vec3f const *b) {
-    float x = a->x;
-    float y = a->y;
-    float z = a->z;
-    a->x = y * b->z - z * b->y;
-    a->y = z * b->x - x * b->z;
-    a->z = x * b->y - y * b->x;
+Vec3f
+vec3fCrossProduct(Vec3f a, Vec3f b) {
+    Vec3f ret = {
+        .x = a.y * b.z - a.z * b.y,
+        .y = a.z * b.x - a.x * b.z,
+        .z = a.x * b.y - a.y * b.x
+    };
+    return ret;
 }

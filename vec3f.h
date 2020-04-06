@@ -10,21 +10,21 @@ typedef struct Vec3f {
 #define Vec3f_size (3 * sizeof(float))
 
 float
-vec3fLength(Vec3f const *vec);
+vec3fLength(Vec3f vec);
 
-void
-vec3fNormalize(Vec3f *vec);
+Vec3f
+vec3fNormalize(Vec3f vec);
 
-void
-vec3fAdd(Vec3f *a, Vec3f const *b);
+Vec3f
+vec3fAdd(Vec3f a, Vec3f b);
 
-void
-vec3fSub(Vec3f *a, Vec3f const *b);
+Vec3f
+vec3fSub(Vec3f a, Vec3f b);
 
 float
-vec3fDotProduct(Vec3f const *a, Vec3f const *b);
+vec3fDotProduct(Vec3f a, Vec3f b);
 
-void
-vec3fCrossProduct(Vec3f *a, Vec3f const *b);
+Vec3f
+vec3fCrossProduct(Vec3f a, Vec3f b);
 
 #endif

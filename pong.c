@@ -10,6 +10,7 @@
 #include "graphics.h"
 #include "input.h"
 #include "world.h"
+#include "mat4f.h"
 
 float movementSpeed = 0.1;
 

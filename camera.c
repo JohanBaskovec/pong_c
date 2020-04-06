@@ -38,14 +38,9 @@ updateCameraVector() {
     camera.direction.y = sin(pitchRad);
     camera.direction.z = sin(yawRad) * cos(pitchRad);
 
-    camera.front = camera.direction;
-    vec3fNormalize(&camera.front);
+    camera.front = vec3fNormalize(camera.direction);
 
-    camera.right = camera.front;
-    vec3fCrossProduct(&camera.right, &worldUp);
-    vec3fNormalize(&camera.right);
+    camera.right = vec3fNormalize(vec3fCrossProduct(camera.front, worldUp));
 
-    camera.up = camera.right;
-    vec3fCrossProduct(&camera.up, &camera.front);
-    vec3fNormalize(&camera.up);
+    camera.up = vec3fNormalize(vec3fCrossProduct(camera.right, camera.front));
 }

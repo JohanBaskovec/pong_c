@@ -30,29 +30,32 @@ typedef struct Mat4f {
 
 #define Mat4f_size (16 * sizeof(float))
 
-void
-mat4fIdentity(Mat4f *mat);
+Mat4f
+mat4fIdentity();
 
-void
-mat4fVec3fTranslate(Mat4f *mat, Vec3f const *vec);
+Mat4f
+mat4fVec3fTranslate(Mat4f mat, Vec3f vec);
 
-void
+Mat4f
 mat4fPerspective(
-        Mat4f *mat
-        , float fovy
+        float fovy
         , float aspect
         , float zNear
         , float zFar
 );
 
-void
-mat4fVec3fRotate(Mat4f *mat, float angle, Vec3f const *vec);
+Mat4f
+mat4fVec3fRotate(Mat4f mat, float angle, Vec3f vec);
 
-void
-mat4fLookAt(
-        Mat4f *mat
-        , Vec3f const *position
-        , Vec3f const *target
-        , Vec3f const *up
-);
+Mat4f
+mat4fLookAt(Vec3f position, Vec3f target, Vec3f up);
+
+Mat4f
+mat4fScale(Mat4f mat, Vec3f vec);
+
+Mat4f
+mat4fMulMat4f(Mat4f a, Mat4f const b);
+
+Mat4f
+mat4fMuli(Mat4f mat, int s);
 #endif

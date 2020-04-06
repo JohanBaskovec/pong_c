@@ -213,15 +213,11 @@ graphicsRender() {
 
     glUseProgram(program);
 
-    Mat4f viewMat;
-    //Mat4f view;
-    camera.target = camera.position;
-    vec3fAdd(&camera.target, &camera.front);
-    mat4fLookAt(&viewMat, &camera.position, &camera.target, &camera.up);
+    camera.target = vec3fAdd(camera.position, camera.front);
+    Mat4f viewMat = mat4fLookAt(camera.position, camera.target, camera.up);
     glUniformMatrix4fv(viewVar, 1, false, (GLfloat*)&viewMat);
 
-    Mat4f projectionMat;
-    mat4fPerspective(&projectionMat, fovRadians, screenRatio, ZNEAR, ZFAR);
+    Mat4f projectionMat = mat4fPerspective(fovRadians, screenRatio, ZNEAR, ZFAR);
     glUniformMatrix4fv(projectionVar, 1, false, (GLfloat*)&projectionMat);
 
     glActiveTexture(GL_TEXTURE1);
@@ -234,10 +230,9 @@ graphicsRender() {
         .y = 0.0,
         .z = 0.0
     };
-    Mat4f modelMat;
-    mat4fIdentity(&modelMat);
-    mat4fVec3fRotate(&modelMat, SDL_GetTicks() * degreesToRadians(-0.1), &rotate);
-    mat4fVec3fTranslate(&modelMat, &paddle1.position);
+    Mat4f modelMat = mat4fIdentity();
+    modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.1), rotate);
+    modelMat = mat4fVec3fTranslate(modelMat, paddle1.position);
     glUniformMatrix4fv(modelVar, 1, false, (GLfloat*)&modelMat);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
