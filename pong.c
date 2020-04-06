@@ -17,6 +17,7 @@ float movementSpeed = 0.1;
 int main(int argc, char *argv[]) {
     cameraInit();
     graphicsInit();
+    worldInit();
 
     while (true) {
         graphicsRender();

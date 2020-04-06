@@ -1,11 +1,17 @@
 #version 130
-in vec3 LVertexPos2D;
-in vec2 inTextureCoord;
-out vec2 TextCoord;
+in vec3 aPos;
+in vec3 aNormal;
+
+out vec3 FragPos;
+out vec3 Normal;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-void main() {
-   gl_Position = projection * view * model * vec4(LVertexPos2D, 1.0f);
-   TextCoord = inTextureCoord;
+
+void main()
+{
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    Normal = aNormal;
+    gl_Position = projection * view * vec4(FragPos, 1.0);
 }

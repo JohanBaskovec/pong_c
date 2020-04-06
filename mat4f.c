@@ -137,8 +137,19 @@ mat4fLookAt(Vec3f position, Vec3f target, Vec3f up) {
 
 Mat4f
 mat4fScale(Mat4f mat, Vec3f vec) {
-    Mat4f ret;
-    ret.m00 = 1;
+    Mat4f ret = mat;
+    ret.m00 *= vec.x;
+    ret.m01 *= vec.x;
+    ret.m02 *= vec.x;
+
+    ret.m10 *= vec.y;
+    ret.m11 *= vec.y;
+    ret.m12 *= vec.y;
+
+    ret.m20 *= vec.z;
+    ret.m21 *= vec.z;
+    ret.m22 *= vec.z;
+
     return ret;
 }
 

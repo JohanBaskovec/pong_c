@@ -1,7 +1,23 @@
 #version 130
-out vec4 LFragment;
-in vec2 TextCoord;
-uniform sampler2D paddleTexture;
-void main() {
-   LFragment = texture(paddleTexture, TextCoord);
+in vec3 Normal;
+in vec3 FragPos;
+
+out vec4 FragColor;
+
+uniform vec3 objectColor;
+uniform vec3 lightColor;
+uniform vec3 lightPosition;
+
+void main()
+{
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(lightPosition - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
+
+    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * lightColor;
+
+    vec3 result = (ambient + diffuse) * objectColor;
+    FragColor = vec4(result, 1.0);
 }

@@ -21,21 +21,12 @@ static float fovRadians = 0;
 static GLchar *vertexShaderSource[] = {""};
 static GLchar *fragmentShaderSource[] = {""};
 
-GLuint vao;
+GLuint cubeVao;
 GLuint vbo;
 GLuint ibo;
+GLuint lightVao;
 SDL_Window *window;
-GLuint program;
-GLuint vertexShader;
-GLuint fragmentShader;
 GLuint paddleTexture;
-
-GLint inTextureCoordVar;
-GLint vertexVar;
-GLint modelVar;
-GLint projectionVar;
-GLint viewVar;
-GLint paddleTextureVar;
 
 void
 openglDebugMessageCallback(GLenum source, GLenum type, GLuint id,
@@ -49,12 +40,11 @@ openglDebugMessageCallback(GLenum source, GLenum type, GLuint id,
     );
 }
 
+CubeProgram cubeProgram;
+LightProgram lightProgram;
 
 void
 graphicsInit() {
-    readShaderSource("cube.vs", vertexShaderSource);
-    readShaderSource("cube.fs", fragmentShaderSource);
-
     screenRatio = (screenWidth * 1.0) / screenHeight;
     fovRadians = degreesToRadians(fovDegree);
     int err = SDL_Init(SDL_INIT_VIDEO);
@@ -104,48 +94,14 @@ graphicsInit() {
       fatalSdlError("SDL_GL_SetSwapInterval");
     }
 
-    program = glCreateProgram();
+    cubeProgram = cubeProgramCreate();
+    lightProgram = lightProgramCreate();
 
-    vertexShader = createShader(
-            GL_VERTEX_SHADER
-            , vertexShaderSource
-            , program
-    );
-
-    fragmentShader = createShader(
-            GL_FRAGMENT_SHADER
-            , fragmentShaderSource
-            , program
-    );
-
-    glLinkProgram(program);
-
-    glUseProgram(program);
-
-    GLint linkSuccess = false;
-    glGetProgramiv(program, GL_LINK_STATUS, &linkSuccess);
-    if (!linkSuccess) {
-        char errorMessage[1024];
-        GLsizei errorMessageLength = 0;
-        glGetProgramInfoLog(program, 1024, &errorMessageLength, errorMessage);
-        fatalError("glLinkProgram: error: %s\n", errorMessage);
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    inTextureCoordVar = glGetAttribLocation(program, "inTextureCoord");
-    vertexVar = glGetAttribLocation(program, "LVertexPos2D");
-    modelVar = glGetUniformLocation(program, "model");
-    projectionVar = glGetUniformLocation(program, "projection");
-    viewVar = glGetUniformLocation(program, "view");
-    paddleTextureVar = glGetUniformLocation(program, "paddleTexture");
-
-    glGenVertexArrays(1, &vao);
+    glGenVertexArrays(1, &cubeVao);
     glGenBuffers(1, &vbo);
     glGenBuffers(1, &ibo);
 
-    glBindVertexArray(vao);
+    glBindVertexArray(cubeVao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
@@ -160,16 +116,27 @@ graphicsInit() {
     );
 
     glVertexAttribPointer(
-            vertexVar
+            cubeProgram.aPos
             , 3
             , GL_FLOAT
             , GL_FALSE
-            , 5 * sizeof(float)
+            , 8 * sizeof(float)
             , NULL
     );
+    glEnableVertexAttribArray(cubeProgram.aPos);
 
-    glEnableVertexAttribArray(vertexVar);
+    glVertexAttribPointer(
+            cubeProgram.aNormal
+            , 3
+            , GL_FLOAT
+            , GL_FALSE
+            , 8 * sizeof(float)
+            , (void*)(5 * sizeof(float))
 
+    );
+    glEnableVertexAttribArray(cubeProgram.aNormal);
+
+    /*
     glVertexAttribPointer(
             inTextureCoordVar
             , 2
@@ -198,6 +165,22 @@ graphicsInit() {
     stbi_image_free(data);
 
     glUniform1i(paddleTextureVar, paddleTexture);
+    */
+
+    glGenVertexArrays(1, &lightVao);
+    glBindVertexArray(lightVao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glVertexAttribPointer(
+            lightProgram.aPos
+            , 3
+            , GL_FLOAT
+            , GL_FALSE
+            , 8 * sizeof(float)
+            , NULL
+    );
+    glEnableVertexAttribArray(lightProgram.aPos);
 
     glBindVertexArray(0);
 
@@ -208,22 +191,30 @@ graphicsInit() {
 
 void
 graphicsRender() {
-    glClearColor(1.0, 0.0, 0.0, 1.0);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(program);
+    glUseProgram(cubeProgram.id);
 
     camera.target = vec3fAdd(camera.position, camera.front);
     Mat4f viewMat = mat4fLookAt(camera.position, camera.target, camera.up);
-    glUniformMatrix4fv(viewVar, 1, false, (GLfloat*)&viewMat);
+    glUniformMatrix4fv(cubeProgram.view, 1, false, (GLfloat*)&viewMat);
 
     Mat4f projectionMat = mat4fPerspective(fovRadians, screenRatio, ZNEAR, ZFAR);
-    glUniformMatrix4fv(projectionVar, 1, false, (GLfloat*)&projectionMat);
+    glUniformMatrix4fv(cubeProgram.projection, 1, false, (GLfloat*)&projectionMat);
 
+    float objectColor[] = {1.0, 0.5, 0.31};
+    glUniform3fv(cubeProgram.objectColor, 1, objectColor);
+
+    float lightColor[] = {1.0, 1.0, 1.0};
+    glUniform3fv(cubeProgram.lightColor, 1, lightColor);
+
+    glUniform3fv(cubeProgram.lightPosition, 1, (GLfloat*)&lightPos);
+    /*
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, paddleTexture);
+    */
 
-    glBindVertexArray(vao);
 
     Vec3f rotate = {
         .x = 1.0,
@@ -231,10 +222,26 @@ graphicsRender() {
         .z = 0.0
     };
     Mat4f modelMat = mat4fIdentity();
-    modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.1), rotate);
+    //Vec3f scale = { 0.2, 2.0, 2.0};
+    //modelMat = mat4fScale(modelMat, scale);
+    //modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.1), rotate);
     modelMat = mat4fVec3fTranslate(modelMat, paddle1.position);
-    glUniformMatrix4fv(modelVar, 1, false, (GLfloat*)&modelMat);
+    glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
 
+    glBindVertexArray(cubeVao);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glUseProgram(lightProgram.id);
+    glUniformMatrix4fv(lightProgram.view, 1, false, (GLfloat*)&viewMat);
+    glUniformMatrix4fv(lightProgram.projection, 1, false, (GLfloat*)&projectionMat);
+
+    modelMat = mat4fIdentity();
+    modelMat = mat4fVec3fTranslate(modelMat, lightPos);
+    Vec3f lightScale = {0.2, 0.2, 0.2};
+    modelMat = mat4fScale(modelMat, lightScale);
+    glUniformMatrix4fv(lightProgram.model, 1, false, (GLfloat*)&modelMat);
+
+    glBindVertexArray(lightVao);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glBindVertexArray(0);
