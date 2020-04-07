@@ -51,3 +51,13 @@ vec3fCrossProduct(Vec3f a, Vec3f b) {
     };
     return ret;
 }
+
+Vec3f
+vec3fMulf(Vec3f vec, float f) {
+    Vec3f ret = {
+        .x = vec.x * f,
+        .y = vec.y * f,
+        .z = vec.z * f
+    };
+    return ret;
+}

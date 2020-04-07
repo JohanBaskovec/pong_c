@@ -224,9 +224,9 @@ graphicsRender() {
     };
     Mat4f modelMat = mat4fIdentity();
     Vec3f scale = { 0.2, 2.0, 2.0};
-    modelMat = mat4fScale(modelMat, scale);
     modelMat = mat4fVec3fTranslate(modelMat, paddle1.position);
     modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.05), rotate);
+    modelMat = mat4fScale(modelMat, scale);
     glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
 
     Mat4f modelInverseMat = mat4fInverse(modelMat);
@@ -239,11 +239,11 @@ graphicsRender() {
     glUniformMatrix4fv(lightProgram.view, 1, false, (GLfloat*)&viewMat);
     glUniformMatrix4fv(lightProgram.projection, 1, false, (GLfloat*)&projectionMat);
 
-    modelMat = mat4fIdentity();
-    modelMat = mat4fVec3fTranslate(modelMat, lightPos);
+    Mat4f lightModelMat = mat4fIdentity();
+    lightModelMat = mat4fVec3fTranslate(lightModelMat, lightPos);
     Vec3f lightScale = {0.2, 0.2, 0.2};
-    modelMat = mat4fScale(modelMat, lightScale);
-    glUniformMatrix4fv(lightProgram.model, 1, false, (GLfloat*)&modelMat);
+    lightModelMat = mat4fScale(lightModelMat, lightScale);
+    glUniformMatrix4fv(lightProgram.model, 1, false, (GLfloat*)&lightModelMat);
 
     glBindVertexArray(lightVao);
     glDrawArrays(GL_TRIANGLES, 0, 36);

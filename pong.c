@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
         }
         if (pressedKeys.up) {
             paddle1.position.y += movementSpeed;
+            SDL_Log("movig up. Position: x:%f y:%f z:%f\n", paddle1.position.x, paddle1.position.y, paddle1.position.z);
         } else if (pressedKeys.down) {
             paddle1.position.y -= movementSpeed;
         }

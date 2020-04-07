@@ -72,34 +72,49 @@ mat4fPerspective(
 
 // source: https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
 Mat4f
-mat4fVec3fRotate(Mat4f mat, float angle, Vec3f vec) {
-    float s = sin(angle);
-    float c = cos(angle);
-    float oneMinC = (1 - c);
+mat4fVec3fRotate(Mat4f m, float angle, Vec3f vec) {
+    float a = angle;
+    float c = cos(a);
+    float s = sin(a);
 
     Vec3f axis = vec3fNormalize(vec);
 
+    Vec3f temp = vec3fMulf(axis, 1.0 - c);
+
+    Mat4f rot;
+    rot.m00 = c + temp.x * axis.x;
+    rot.m01 = temp.x * axis.y + s * axis.z;
+    rot.m02 = temp.x * axis.z - s * axis.y;
+
+    rot.m10 = temp.y * axis.x - s * axis.z;
+    rot.m11 = c + temp.y * axis.y;
+    rot.m12 = temp.y * axis.z + s * axis.x;
+
+    rot.m20 = temp.z * axis.x + s * axis.y;
+    rot.m21 = temp.z * axis.y - s * axis.x;
+    rot.m22 = c + temp.z * axis.z;
+
     Mat4f ret;
-    ret.m00 = c + (axis.x * axis.x) * oneMinC;
-    ret.m01 = axis.y * axis.x * oneMinC + axis.z * s;
-    ret.m02 = axis.z * axis.x * oneMinC - axis.y * s;
-    ret.m03 = 0;
+    ret.m00 = m.m00 * rot.m00 + m.m10 * rot.m01 + m.m20 * rot.m02;
+    ret.m01 = m.m01 * rot.m00 + m.m11 * rot.m01 + m.m21 * rot.m02;
+    ret.m02 = m.m02 * rot.m00 + m.m12 * rot.m01 + m.m22 * rot.m02;
+    ret.m03 = m.m03 * rot.m00 + m.m13 * rot.m01 + m.m23 * rot.m02;
 
-    ret.m10 = axis.x * axis.y * oneMinC - axis.z * s;
-    ret.m11 = c + (axis.y * axis.y) * oneMinC;
-    ret.m12 = axis.z * axis.y * oneMinC + axis.x * s;
-    ret.m13 = 0;
+    ret.m10 = m.m00 * rot.m10 + m.m10 * rot.m11 + m.m20 * rot.m12;
+    ret.m11 = m.m01 * rot.m10 + m.m11 * rot.m11 + m.m21 * rot.m12;
+    ret.m12 = m.m02 * rot.m10 + m.m12 * rot.m11 + m.m22 * rot.m12;
+    ret.m13 = m.m03 * rot.m10 + m.m13 * rot.m11 + m.m23 * rot.m12;
 
-    ret.m20 = axis.x * axis.z * oneMinC + axis.y * s;
-    ret.m21 = axis.y * axis.z * oneMinC - axis.x * s;
-    ret.m22 = c + (axis.z * axis.z) * oneMinC;
-    ret.m23 = 0;
+    ret.m20 = m.m00 * rot.m20 + m.m10 * rot.m21 + m.m20 * rot.m22;
+    ret.m21 = m.m01 * rot.m20 + m.m11 * rot.m21 + m.m21 * rot.m22;
+    ret.m22 = m.m02 * rot.m20 + m.m12 * rot.m21 + m.m22 * rot.m22;
+    ret.m23 = m.m03 * rot.m20 + m.m13 * rot.m21 + m.m23 * rot.m22;
 
-    ret.m30 = 0;
-    ret.m31 = 0;
-    ret.m32 = 0;
-    ret.m33 = 1;
-    return mat4fMulMat4f(mat, ret);
+    ret.m30 = m.m30;
+    ret.m31 = m.m31;
+    ret.m32 = m.m32;
+    ret.m33 = m.m33;
+    return ret;
 }
 
 Mat4f

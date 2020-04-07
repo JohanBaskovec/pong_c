@@ -21,6 +21,9 @@ vec3fAdd(Vec3f a, Vec3f b);
 Vec3f
 vec3fSub(Vec3f a, Vec3f b);
 
+Vec3f
+vec3fMulf(Vec3f vec, float f);
+
 float
 vec3fDotProduct(Vec3f a, Vec3f b);
 
