@@ -120,15 +120,25 @@ cubeProgramCreate() {
 
     SET_ATTRIB_LOCATION(aPos);
     SET_ATTRIB_LOCATION(aNormal);
+    SET_ATTRIB_LOCATION(aTexCoords);
 
     SET_UNIFORM_LOCATION(model);
     SET_UNIFORM_LOCATION(modelInverse);
     SET_UNIFORM_LOCATION(projection);
     SET_UNIFORM_LOCATION(view);
-    SET_UNIFORM_LOCATION(objectColor);
-    SET_UNIFORM_LOCATION(lightColor);
-    SET_UNIFORM_LOCATION(lightPosition);
     SET_UNIFORM_LOCATION(cameraPosition);
+
+    SET_UNIFORM_LOCATION(light.position);
+    SET_UNIFORM_LOCATION(light.ambient);
+    SET_UNIFORM_LOCATION(light.diffuse);
+    SET_UNIFORM_LOCATION(light.specular);
+    SET_UNIFORM_LOCATION(light.constant);
+    SET_UNIFORM_LOCATION(light.linear);
+    SET_UNIFORM_LOCATION(light.quadratic);
+
+    SET_UNIFORM_LOCATION(material.diffuse);
+    SET_UNIFORM_LOCATION(material.specular);
+    SET_UNIFORM_LOCATION(material.shininess);
 
     glUseProgram(0);
     SDL_Log("Cube program created.\n");

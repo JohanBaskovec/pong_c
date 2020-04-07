@@ -136,16 +136,15 @@ graphicsInit() {
     );
     glEnableVertexAttribArray(cubeProgram.aNormal);
 
-    /*
     glVertexAttribPointer(
-            inTextureCoordVar
+            cubeProgram.aTexCoords
             , 2
             , GL_FLOAT
             , GL_FALSE
-            , 5 * sizeof(float)
+            , 8 * sizeof(float)
             , (void*)(3 * sizeof(float))
     );
-    glEnableVertexAttribArray(inTextureCoordVar);
+    glEnableVertexAttribArray(cubeProgram.aTexCoords);
 
     glGenTextures(1, &paddleTexture);
 
@@ -163,9 +162,6 @@ graphicsInit() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
-
-    glUniform1i(paddleTextureVar, paddleTexture);
-    */
 
     glGenVertexArrays(1, &lightVao);
     glBindVertexArray(lightVao);
@@ -203,18 +199,21 @@ graphicsRender() {
     Mat4f projectionMat = mat4fPerspective(fovRadians, screenRatio, ZNEAR, ZFAR);
     glUniformMatrix4fv(cubeProgram.projection, 1, false, (GLfloat*)&projectionMat);
 
-    float objectColor[] = {1.0, 0.5, 0.31};
-    glUniform3fv(cubeProgram.objectColor, 1, objectColor);
-
-    float lightColor[] = {1.0, 1.0, 1.0};
-    glUniform3fv(cubeProgram.lightColor, 1, lightColor);
-
-    glUniform3fv(cubeProgram.lightPosition, 1, (GLfloat*)&lightPos);
     glUniform3fv(cubeProgram.cameraPosition, 1, (GLfloat*)&camera.position);
-    /*
+
+    glUniform3fv(cubeProgram.light.position, 1, (GLfloat*)&lightPos);
+    glUniform3f(cubeProgram.light.ambient, 0.2, 0.2, 0.2);
+    glUniform3f(cubeProgram.light.diffuse, 0.5, 0.5, 0.5);
+    glUniform3f(cubeProgram.light.specular, 1.0, 1.0, 1.0);
+    glUniform1f(cubeProgram.light.constant, 1.0);
+    glUniform1f(cubeProgram.light.linear, 0.09);
+    glUniform1f(cubeProgram.light.quadratic, 0.032);
+
+    glUniform1i(cubeProgram.material.diffuse, paddleTexture);
+    glUniform1f(cubeProgram.material.shininess, 32.0);
+
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, paddleTexture);
-    */
 
 
     Vec3f rotate = {

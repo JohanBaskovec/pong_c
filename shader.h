@@ -8,21 +8,39 @@ programCreate(
         char const *fragmentShader
 );
 
+typedef struct MaterialVars {
+    GLint diffuse;
+    GLint specular;
+    GLint shininess;
+} MaterialVars;
+
+typedef struct LightVars {
+    GLint position;
+    GLint ambient;
+    GLint diffuse;
+    GLint specular;
+    GLint constant;
+    GLint linear;
+    GLint quadratic;
+} LightVars;
+
 typedef struct CubeProgram {
     GLuint id;
 
     GLint aPos;
     GLint aNormal;
+    GLint aTexCoords;
 
     GLint model;
     GLint modelInverse;
     GLint view;
     GLint projection;
 
-    GLint objectColor;
-    GLint lightColor;
-    GLint lightPosition;
     GLint cameraPosition;
+
+    LightVars light;
+
+    MaterialVars material;
 } CubeProgram;
 
 
