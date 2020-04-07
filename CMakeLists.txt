@@ -28,6 +28,7 @@ set(SOURCES
     mat4f.c
     vec3f.c
     fs.c
+    vec4f.c
 )
 
 add_executable(pong

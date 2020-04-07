@@ -219,15 +219,18 @@ graphicsRender() {
 
     Vec3f rotate = {
         .x = 1.0,
-        .y = 0.0,
+        .y = 1.0,
         .z = 0.0
     };
     Mat4f modelMat = mat4fIdentity();
-    //Vec3f scale = { 0.2, 2.0, 2.0};
-    //modelMat = mat4fScale(modelMat, scale);
-    //modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.1), rotate);
+    Vec3f scale = { 0.2, 2.0, 2.0};
+    modelMat = mat4fScale(modelMat, scale);
     modelMat = mat4fVec3fTranslate(modelMat, paddle1.position);
+    modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.05), rotate);
     glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
+
+    Mat4f modelInverseMat = mat4fInverse(modelMat);
+    glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
 
     glBindVertexArray(cubeVao);
     glDrawArrays(GL_TRIANGLES, 0, 36);

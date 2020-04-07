@@ -58,4 +58,16 @@ mat4fMulMat4f(Mat4f a, Mat4f const b);
 
 Mat4f
 mat4fMuli(Mat4f mat, int s);
+
+Mat4f
+mat4fMulf(Mat4f mat, float s);
+
+Mat4f
+mat4fInverse(Mat4f mat);
+
+Mat4f
+mat4fInverseTranspose(Mat4f mat);
+
+void
+mat4fPrint(Mat4f *mat);
 #endif

@@ -15,6 +15,7 @@ typedef struct CubeProgram {
     GLint aNormal;
 
     GLint model;
+    GLint modelInverse;
     GLint view;
     GLint projection;
 

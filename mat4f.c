@@ -1,5 +1,7 @@
 #include "mat4f.h"
+#include "vec4f.h"
 #include <math.h>
+#include <stdio.h>
 
 Mat4f
 mat4fIdentity() {
@@ -201,4 +203,225 @@ mat4fMuli(Mat4f mat, int s) {
     ret.m32 *= s;
     ret.m33 *= s;
     return ret;
+}
+
+Mat4f
+mat4fMulf(Mat4f mat, float s) {
+    Mat4f ret = mat;
+    ret.m00 *= s;
+    ret.m01 *= s;
+    ret.m02 *= s;
+    ret.m03 *= s;
+
+    ret.m10 *= s;
+    ret.m11 *= s;
+    ret.m12 *= s;
+    ret.m13 *= s;
+
+    ret.m20 *= s;
+    ret.m21 *= s;
+    ret.m22 *= s;
+    ret.m23 *= s;
+
+    ret.m30 *= s;
+    ret.m31 *= s;
+    ret.m32 *= s;
+    ret.m33 *= s;
+    return ret;
+}
+
+Mat4f
+mat4fDivf(Mat4f mat, float s) {
+    Mat4f ret = mat;
+    ret.m00 /= s;
+    ret.m01 /= s;
+    ret.m02 /= s;
+    ret.m03 /= s;
+
+    ret.m10 /= s;
+    ret.m11 /= s;
+    ret.m12 /= s;
+    ret.m13 /= s;
+
+    ret.m20 /= s;
+    ret.m21 /= s;
+    ret.m22 /= s;
+    ret.m23 /= s;
+
+    ret.m30 /= s;
+    ret.m31 /= s;
+    ret.m32 /= s;
+    ret.m33 /= s;
+    return ret;
+}
+
+/**
+ * Source: https://github.com/g-truc/glm/blob/master/glm/detail/func_matrix.inl
+ **/
+Mat4f
+mat4fInverse(Mat4f m) {
+    float coef00 = m.m22 * m.m33 - m.m32 * m.m23;
+    float coef02 = m.m12 * m.m33 - m.m32 * m.m13;
+    float coef03 = m.m12 * m.m23 - m.m22 * m.m13;
+
+    float coef04 = m.m21 * m.m33 - m.m31 * m.m23;
+    float coef06 = m.m11 * m.m33 - m.m31 * m.m13;
+    float coef07 = m.m11 * m.m23 - m.m21 * m.m13;
+
+    float coef08 = m.m21 * m.m32 - m.m31 * m.m22;
+    float coef10 = m.m11 * m.m32 - m.m31 * m.m12;
+    float coef11 = m.m11 * m.m22 - m.m21 * m.m12;
+
+    float coef12 = m.m20 * m.m33 - m.m30 * m.m23;
+    float coef14 = m.m10 * m.m33 - m.m30 * m.m13;
+    float coef15 = m.m10 * m.m23 - m.m20 * m.m13;
+
+    float coef16 = m.m20 * m.m32 - m.m30 * m.m22;
+    float coef18 = m.m10 * m.m32 - m.m30 * m.m12;
+    float coef19 = m.m10 * m.m22 - m.m20 * m.m12;
+
+    float coef20 = m.m20 * m.m31 - m.m30 * m.m21;
+    float coef22 = m.m10 * m.m31 - m.m30 * m.m11;
+    float coef23 = m.m10 * m.m21 - m.m20 * m.m11;
+
+    Vec4f fac0 = {coef00, coef00, coef02, coef03};
+    Vec4f fac1 = {coef04, coef04, coef06, coef07};
+    Vec4f fac2 = {coef08, coef08, coef10, coef11};
+    Vec4f fac3 = {coef12, coef12, coef14, coef15};
+    Vec4f fac4 = {coef16, coef16, coef18, coef19};
+    Vec4f fac5 = {coef20, coef20, coef22, coef23};
+
+    Vec4f vec0 = {m.m10, m.m00, m.m00, m.m00};
+    Vec4f vec1 = {m.m11, m.m01, m.m01, m.m01};
+    Vec4f vec2 = {m.m12, m.m02, m.m02, m.m02};
+    Vec4f vec3 = {m.m13, m.m03, m.m03, m.m03};
+
+    Vec4f mul0 = vec4fMulVec4f(vec1, fac0);
+    Vec4f mul1 = vec4fMulVec4f(vec2, fac1);
+    Vec4f mul2 = vec4fMulVec4f(vec3, fac2);
+    Vec4f sub0 = vec4fSubVec4f(mul0, mul1);
+    Vec4f inv0 = vec4fAddVec4f(sub0, mul2);
+
+    Vec4f mul3 = vec4fMulVec4f(vec0, fac0);
+    Vec4f mul4 = vec4fMulVec4f(vec2, fac3);
+    Vec4f mul5 = vec4fMulVec4f(vec3, fac4);
+    Vec4f sub1 = vec4fSubVec4f(mul3, mul4);
+    Vec4f inv1 = vec4fAddVec4f(sub1, mul5);
+
+    Vec4f mul6 = vec4fMulVec4f(vec0, fac1);
+    Vec4f mul7 = vec4fMulVec4f(vec1, fac3);
+    Vec4f mul8 = vec4fMulVec4f(vec3, fac5);
+    Vec4f sub2 = vec4fSubVec4f(mul6, mul7);
+    Vec4f inv2 = vec4fAddVec4f(sub2, mul8);
+
+    Vec4f mul9 = vec4fMulVec4f(vec0, fac2);
+    Vec4f mul10 = vec4fMulVec4f(vec1, fac4);
+    Vec4f mul11 = vec4fMulVec4f(vec2, fac5);
+    Vec4f sub3 = vec4fSubVec4f(mul9, mul10);
+    Vec4f inv3 = vec4fAddVec4f(sub3, mul11);
+
+    Vec4f signA = {+1, -1, +1, -1};
+    Vec4f signB = {-1, +1, -1, +1};
+
+    Mat4f inverse;
+    inverse.m00 = inv0.x * signA.x;
+    inverse.m01 = inv0.y * signA.y;
+    inverse.m02 = inv0.z * signA.z;
+    inverse.m03 = inv0.w * signA.w;
+
+    inverse.m10 = inv1.x * signB.x;
+    inverse.m11 = inv1.y * signB.y;
+    inverse.m12 = inv1.z * signB.z;
+    inverse.m13 = inv1.w * signB.w;
+
+    inverse.m20 = inv2.x * signA.x;
+    inverse.m21 = inv2.y * signA.y;
+    inverse.m22 = inv2.z * signA.z;
+    inverse.m23 = inv2.w * signA.w;
+
+    inverse.m30 = inv3.x * signB.x;
+    inverse.m31 = inv3.y * signB.y;
+    inverse.m32 = inv3.z * signB.z;
+    inverse.m33 = inv3.w * signB.w;
+
+    Vec4f row0 = {inverse.m00, inverse.m10, inverse.m20, inverse.m30};
+
+    Vec4f dot0 = {
+        .x = m.m00 * row0.x,
+        .y = m.m01 * row0.y,
+        .z = m.m02 * row0.z,
+        .w = m.m03 * row0.w,
+    };
+
+    float dot1 = dot0.x + dot0.y + dot0.z + dot0.w;
+
+    float oneOverDeterminant = 1.0 / dot1;
+
+    return mat4fMulf(inverse, oneOverDeterminant);
+}
+
+/**
+ * "Inspired" by glm's inverseTranspose
+ * https://github.com/g-truc/glm/blob/master/glm/gtc/matrix_inverse.inl
+ **/
+Mat4f
+mat4fInverseTranspose(Mat4f m) {
+    float subFactor00 = m.m22 * m.m33 - m.m32 * m.m23;
+    float subFactor01 = m.m21 * m.m33 - m.m31 * m.m23;
+    float subFactor02 = m.m21 * m.m32 - m.m31 * m.m22;
+    float subFactor03 = m.m20 * m.m33 - m.m30 * m.m23;
+    float subFactor04 = m.m20 * m.m32 - m.m30 * m.m22;
+    float subFactor05 = m.m20 * m.m31 - m.m30 * m.m21;
+    float subFactor06 = m.m12 * m.m33 - m.m32 * m.m13;
+    float subFactor07 = m.m11 * m.m33 - m.m31 * m.m13;
+    float subFactor08 = m.m11 * m.m32 - m.m31 * m.m12;
+    float subFactor09 = m.m10 * m.m33 - m.m30 * m.m13;
+    float subFactor10 = m.m10 * m.m32 - m.m30 * m.m12;
+    float subFactor11 = m.m10 * m.m31 - m.m30 * m.m11;
+    float subFactor12 = m.m12 * m.m23 - m.m22 * m.m13;
+    float subFactor13 = m.m11 * m.m23 - m.m21 * m.m13;
+    float subFactor14 = m.m11 * m.m22 - m.m21 * m.m12;
+    float subFactor15 = m.m10 * m.m23 - m.m20 * m.m13;
+    float subFactor16 = m.m10 * m.m22 - m.m20 * m.m12;
+    float subFactor17 = m.m10 * m.m21 - m.m20 * m.m11;
+
+    Mat4f inverse;
+    inverse.m00 = + (m.m11 * subFactor00 - m.m12 * subFactor01 + m.m13 * subFactor02);
+    inverse.m01 = - (m.m10 * subFactor00 - m.m12 * subFactor03 + m.m13 * subFactor04);
+    inverse.m02 = + (m.m10 * subFactor01 - m.m11 * subFactor03 + m.m13 * subFactor05);
+    inverse.m03 = - (m.m10 * subFactor02 - m.m11 * subFactor04 + m.m12 * subFactor05);
+
+    inverse.m10 = - (m.m01 * subFactor00 - m.m02 * subFactor01 + m.m03 * subFactor02);
+    inverse.m11 = + (m.m00 * subFactor00 - m.m02 * subFactor03 + m.m03 * subFactor04);
+    inverse.m12 = - (m.m00 * subFactor01 - m.m01 * subFactor03 + m.m03 * subFactor05);
+    inverse.m13 = + (m.m00 * subFactor02 - m.m01 * subFactor04 + m.m02 * subFactor05);
+
+    inverse.m20 = + (m.m01 * subFactor06 - m.m02 * subFactor07 + m.m03 * subFactor08);
+    inverse.m21 = - (m.m00 * subFactor06 - m.m02 * subFactor09 + m.m03 * subFactor10);
+    inverse.m22 = + (m.m00 * subFactor07 - m.m01 * subFactor09 + m.m03 * subFactor11);
+    inverse.m23 = - (m.m00 * subFactor08 - m.m01 * subFactor10 + m.m02 * subFactor11);
+
+    inverse.m30 = - (m.m01 * subFactor12 - m.m02 * subFactor13 + m.m03 * subFactor14);
+    inverse.m31 = + (m.m00 * subFactor12 - m.m02 * subFactor15 + m.m03 * subFactor16);
+    inverse.m32 = - (m.m00 * subFactor13 - m.m01 * subFactor15 + m.m03 * subFactor17);
+    inverse.m33 = + (m.m00 * subFactor14 - m.m01 * subFactor16 + m.m02 * subFactor17);
+
+    float determinant = + m.m00 * inverse.m00 + m.m01 * inverse.m01
+        + m.m02 * inverse.m02 + m.m03 * inverse.m03;
+
+    return mat4fDivf(inverse, determinant);
+}
+
+void
+mat4fPrint(Mat4f *m) {
+    printf(
+        "%f %f %f %f\n"
+        "%f %f %f %f\n"
+        "%f %f %f %f\n"
+        "%f %f %f %f\n",
+        m->m00, m->m10, m->m20, m->m30,
+        m->m00, m->m11, m->m21, m->m31,
+        m->m00, m->m12, m->m22, m->m32,
+        m->m00, m->m13, m->m23, m->m33
+    );
 }
