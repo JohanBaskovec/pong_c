@@ -11,6 +11,8 @@ extern Paddle paddles[PADDLES_N];
 
 extern Vec3f lightPos[LIGHTS_N];
 
+extern Vec3f floorPos;
+
 void
 worldInit();
 

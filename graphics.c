@@ -13,8 +13,8 @@
 
 #include "3d_data.h"
 
-static int screenWidth = 800;
-static int screenHeight = 600;
+static int screenWidth = 1200;
+static int screenHeight = 1000;
 static float screenRatio = 0;
 static float fovDegree = 90;
 static float fovRadians = 0;
@@ -23,11 +23,18 @@ static GLchar *vertexShaderSource[] = {""};
 static GLchar *fragmentShaderSource[] = {""};
 
 GLuint cubeVao;
+GLuint floorVao;
 GLuint vbo;
+GLuint floorVbo;
 GLuint ibo;
 GLuint lightVao;
 SDL_Window *window;
 GLuint paddleTexture;
+GLuint woodTexture0;
+GLuint woodTexture1;
+
+void
+createTexture(GLuint *texture, char const *fileName, GLenum format);
 
 void
 openglDebugMessageCallback(GLenum source, GLenum type, GLuint id,
@@ -147,26 +154,55 @@ graphicsInit() {
     );
     glEnableVertexAttribArray(cubeProgram.aTexCoords);
 
-    glGenTextures(1, &paddleTexture);
+    glActiveTexture(GL_TEXTURE0);
+    createTexture(&paddleTexture, "paddle.png", GL_RGBA);
 
-    glBindTexture(GL_TEXTURE_2D, paddleTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load("paddle.png", &width, &height, &nrChannels, 0);
-    if (!data) {
-        fatalError("stbi_load error.\n");
-    }
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
+
+    glGenVertexArrays(1, &floorVao);
+    glGenBuffers(1, &floorVbo);
+
+    glBindVertexArray(floorVao);
+    glBindBuffer(GL_ARRAY_BUFFER, floorVbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+            cubeProgram.aPos
+            , 3
+            , GL_FLOAT
+            , GL_FALSE
+            , 8 * sizeof(float)
+            , NULL
+    );
+    glEnableVertexAttribArray(cubeProgram.aPos);
+
+    glVertexAttribPointer(
+            cubeProgram.aNormal
+            , 3
+            , GL_FLOAT
+            , GL_FALSE
+            , 8 * sizeof(float)
+            , (void*)(5 * sizeof(float))
+
+    );
+    glEnableVertexAttribArray(cubeProgram.aNormal);
+
+    glVertexAttribPointer(
+            cubeProgram.aTexCoords
+            , 2
+            , GL_FLOAT
+            , GL_FALSE
+            , 8 * sizeof(float)
+            , (void*)(3 * sizeof(float))
+    );
+    glEnableVertexAttribArray(cubeProgram.aTexCoords);
+
+
+    createTexture(&woodTexture0, "wood00.jpg", GL_RGB);
+    //createTexture(&woodTexture1, "wood01.jpg", GL_RGB);
 
     glGenVertexArrays(1, &lightVao);
     glBindVertexArray(lightVao);
-
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     glVertexAttribPointer(
@@ -212,12 +248,9 @@ graphicsRender() {
         glUniform1f(cubeProgram.pointLights[i].quadratic, 0.032);
     }
 
-    glUniform1i(cubeProgram.material.diffuse, paddleTexture);
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(cubeProgram.material.diffuse, 0);
     glUniform1f(cubeProgram.material.shininess, 64.0);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, paddleTexture);
-
 
     glBindVertexArray(cubeVao);
     for (int i = 0 ; i < PADDLES_N ; i++) {
@@ -237,8 +270,21 @@ graphicsRender() {
         Mat4f modelInverseMat = mat4fInverse(modelMat);
         glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
 
+        glBindTexture(GL_TEXTURE_2D, paddleTexture);
+
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
+
+    glBindVertexArray(floorVao);
+    glBindTexture(GL_TEXTURE_2D, woodTexture0);
+    Mat4f modelMat = mat4fIdentity();
+    modelMat = mat4fVec3fTranslate(modelMat, floorPos);
+    glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
+
+    Mat4f modelInverseMat = mat4fInverse(modelMat);
+    glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glUseProgram(lightProgram.id);
     glUniformMatrix4fv(lightProgram.view, 1, false, (GLfloat*)&viewMat);
@@ -262,4 +308,24 @@ graphicsRender() {
 void
 graphicsFree() {
     SDL_DestroyWindow(window);
+}
+
+void
+createTexture(GLuint *texture, char const *fileName, GLenum format) {
+    glGenTextures(1, texture);
+    SDL_Log("Creating texture %d from %s\n", *texture, fileName);
+    glBindTexture(GL_TEXTURE_2D, *texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char *data = stbi_load(fileName, &width, &height, &nrChannels, 0);
+    if (!data) {
+        fatalError("stbi_load error.\n");
+    }
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
 }

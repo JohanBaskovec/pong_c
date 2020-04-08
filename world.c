@@ -4,6 +4,8 @@ Paddle paddles[PADDLES_N];
 
 Vec3f lightPos[LIGHTS_N];
 
+Vec3f floorPos;
+
 void
 worldInit() {
     paddles[0].position.x = 0.0;
@@ -20,4 +22,6 @@ worldInit() {
 
     lightPos[2].x = -3.0;
     lightPos[2].z = -2.0;
+
+    floorPos.y = -22.0;
 }
