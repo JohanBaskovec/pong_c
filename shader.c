@@ -110,6 +110,10 @@ getAttribLocation(GLuint program, char const *name) {
 #define TO_STR2(a) #a
 #define SET_UNIFORM_LOCATION(name) p.name = getUniformLocation(p.id, #name);
 #define SET_ATTRIB_LOCATION(name) p.name = getAttribLocation(p.id, #name);
+#define SET_UNIFORM_LOCATION_ARRAY(name, property) \
+    snprintf(str, bufferSize, #name "[%d]." #property, i);\
+    p.name[i].property = getUniformLocation(p.id, str);\
+
 
 CubeProgram
 cubeProgramCreate() {
@@ -128,13 +132,18 @@ cubeProgramCreate() {
     SET_UNIFORM_LOCATION(view);
     SET_UNIFORM_LOCATION(cameraPosition);
 
-    SET_UNIFORM_LOCATION(light.position);
-    SET_UNIFORM_LOCATION(light.ambient);
-    SET_UNIFORM_LOCATION(light.diffuse);
-    SET_UNIFORM_LOCATION(light.specular);
-    SET_UNIFORM_LOCATION(light.constant);
-    SET_UNIFORM_LOCATION(light.linear);
-    SET_UNIFORM_LOCATION(light.quadratic);
+    // longest string could be "light[100].quadratic"
+    size_t bufferSize = 25;
+    char str[bufferSize];
+    for (int i = 0 ; i < LIGHTS_N ; i++) {
+        SET_UNIFORM_LOCATION_ARRAY(pointLights, position);
+        SET_UNIFORM_LOCATION_ARRAY(pointLights, ambient);
+        SET_UNIFORM_LOCATION_ARRAY(pointLights, diffuse);
+        SET_UNIFORM_LOCATION_ARRAY(pointLights, specular);
+        SET_UNIFORM_LOCATION_ARRAY(pointLights, constant);
+        SET_UNIFORM_LOCATION_ARRAY(pointLights, linear);
+        SET_UNIFORM_LOCATION_ARRAY(pointLights, quadratic);
+    }
 
     SET_UNIFORM_LOCATION(material.diffuse);
     SET_UNIFORM_LOCATION(material.specular);

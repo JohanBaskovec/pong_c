@@ -1,6 +1,6 @@
 #ifndef PONG_SHADER
 #define PONG_SHADER
-
+#include "defines.h"
 
 GLuint
 programCreate(
@@ -38,9 +38,8 @@ typedef struct CubeProgram {
 
     GLint cameraPosition;
 
-    LightVars light;
-
     MaterialVars material;
+    LightVars pointLights[LIGHTS_N];
 } CubeProgram;
 
 

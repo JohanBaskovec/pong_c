@@ -9,6 +9,7 @@
 #include "stb_image.h"
 #include "shader.h"
 #include "maths.h"
+#include "defines.h"
 
 #include "3d_data.h"
 
@@ -201,13 +202,15 @@ graphicsRender() {
 
     glUniform3fv(cubeProgram.cameraPosition, 1, (GLfloat*)&camera.position);
 
-    glUniform3fv(cubeProgram.light.position, 1, (GLfloat*)&lightPos);
-    glUniform3f(cubeProgram.light.ambient, 0.2, 0.2, 0.2);
-    glUniform3f(cubeProgram.light.diffuse, 0.5, 0.5, 0.5);
-    glUniform3f(cubeProgram.light.specular, 1.0, 1.0, 1.0);
-    glUniform1f(cubeProgram.light.constant, 1.0);
-    glUniform1f(cubeProgram.light.linear, 0.09);
-    glUniform1f(cubeProgram.light.quadratic, 0.032);
+    for (int i = 0 ; i < LIGHTS_N ; i++) {
+        glUniform3fv(cubeProgram.pointLights[i].position, 1, (GLfloat*)&lightPos[i]);
+        glUniform3f(cubeProgram.pointLights[i].ambient, 0.1, 0.1, 0.1);
+        glUniform3f(cubeProgram.pointLights[i].diffuse, 0.5, 0.5, 0.5);
+        glUniform3f(cubeProgram.pointLights[i].specular, 1.0, 1.0, 1.0);
+        glUniform1f(cubeProgram.pointLights[i].constant, 1.0);
+        glUniform1f(cubeProgram.pointLights[i].linear, 0.09);
+        glUniform1f(cubeProgram.pointLights[i].quadratic, 0.032);
+    }
 
     glUniform1i(cubeProgram.material.diffuse, paddleTexture);
     glUniform1f(cubeProgram.material.shininess, 32.0);
@@ -216,36 +219,40 @@ graphicsRender() {
     glBindTexture(GL_TEXTURE_2D, paddleTexture);
 
 
-    Vec3f rotate = {
-        .x = 1.0,
-        .y = 1.0,
-        .z = 0.0
-    };
-    Mat4f modelMat = mat4fIdentity();
-    Vec3f scale = { 0.2, 2.0, 2.0};
-    modelMat = mat4fVec3fTranslate(modelMat, paddle1.position);
-    modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.05), rotate);
-    modelMat = mat4fScale(modelMat, scale);
-    glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
-
-    Mat4f modelInverseMat = mat4fInverse(modelMat);
-    glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
-
     glBindVertexArray(cubeVao);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    for (int i = 0 ; i < PADDLES_N ; i++) {
+        Paddle paddle = paddles[i];
+        Vec3f rotate = {
+            .x = 1.0,
+            .y = 1.0,
+            .z = 0.0
+        };
+        Mat4f modelMat = mat4fIdentity();
+        Vec3f scale = { 0.2, 2.0, 2.0};
+        modelMat = mat4fVec3fTranslate(modelMat, paddle.position);
+        //modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.05), rotate);
+        modelMat = mat4fScale(modelMat, scale);
+        glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
+
+        Mat4f modelInverseMat = mat4fInverse(modelMat);
+        glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
     glUseProgram(lightProgram.id);
     glUniformMatrix4fv(lightProgram.view, 1, false, (GLfloat*)&viewMat);
     glUniformMatrix4fv(lightProgram.projection, 1, false, (GLfloat*)&projectionMat);
 
-    Mat4f lightModelMat = mat4fIdentity();
-    lightModelMat = mat4fVec3fTranslate(lightModelMat, lightPos);
-    Vec3f lightScale = {0.2, 0.2, 0.2};
-    lightModelMat = mat4fScale(lightModelMat, lightScale);
-    glUniformMatrix4fv(lightProgram.model, 1, false, (GLfloat*)&lightModelMat);
-
-    glBindVertexArray(lightVao);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    for (int i = 0 ; i < LIGHTS_N ; i++) {
+        Mat4f lightModelMat = mat4fIdentity();
+        lightModelMat = mat4fVec3fTranslate(lightModelMat, lightPos[i]);
+        Vec3f lightScale = {0.2, 0.2, 0.2};
+        lightModelMat = mat4fScale(lightModelMat, lightScale);
+        glUniformMatrix4fv(lightProgram.model, 1, false, (GLfloat*)&lightModelMat);
+        glBindVertexArray(lightVao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
     glBindVertexArray(0);
     glUseProgram(0);
