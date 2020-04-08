@@ -213,7 +213,7 @@ graphicsRender() {
     }
 
     glUniform1i(cubeProgram.material.diffuse, paddleTexture);
-    glUniform1f(cubeProgram.material.shininess, 32.0);
+    glUniform1f(cubeProgram.material.shininess, 64.0);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, paddleTexture);
