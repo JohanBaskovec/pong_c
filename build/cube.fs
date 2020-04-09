@@ -1,4 +1,4 @@
-#version 130
+#version 330 core
 
 struct Material {
     sampler2D diffuse;
@@ -26,10 +26,53 @@ out vec4 FragColor;
 uniform vec3 cameraPosition;
 uniform Material material;
 
-#define LIGHTS_N 3
+#define LIGHTS_N 1
 uniform Light pointLights[LIGHTS_N];
 
+uniform samplerCube depthMap;
+uniform float farPlane;
+uniform bool shadows;
+
+// array of offset direction for sampling
+vec3 gridSamplingDisk[20] = vec3[]
+(
+   vec3(1, 1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1, 1,  1),
+   vec3(1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+   vec3(1, 1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1, 1,  0),
+   vec3(1, 0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1, 0, -1),
+   vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
+);
+
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
+
+float ShadowCalculation(vec3 fragPos)
+{
+    vec3 fragToLight = fragPos - pointLights[0].position;
+
+    float currentDepth = length(fragToLight);
+    float shadow = 0.0;
+    float bias = 0.15;
+    int samples = 20;
+    float viewDistance = length(cameraPosition - fragPos);
+    float diskRadius = (1.0 + (viewDistance / farPlane)) / 25.0;
+    for(int i = 0; i < samples; ++i)
+    {
+        float closestDepth = texture(depthMap, fragToLight + gridSamplingDisk[i] * diskRadius).r;
+        closestDepth *= farPlane;   // undo mapping [0;1]
+        if(currentDepth - bias > closestDepth)
+            shadow += 1.0;
+    }
+    shadow /= float(samples);
+
+/*
+    shadow = 0.0;
+    float closestDepth = texture(depthMap, fragToLight).r;
+    if(currentDepth - bias > closestDepth)
+        shadow += 1.0;
+        */
+    
+    return shadow;
+}
 
 void main()
 {
@@ -64,9 +107,14 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float gamma = 2.2;
     vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoords));
     vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, TexCoords));
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
+    vec3 specular = light.specular * spec;// * vec3(texture(material.specular, TexCoords));
     ambient  *= attenuation;
     diffuse  *= attenuation;
     specular *= attenuation;
-    return (ambient + diffuse + specular);
+
+    //float shadow = ShadowCalculation(FragPos) * 0.0;
+    float shadow = ShadowCalculation(FragPos);
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular));
+    return lighting;
+    //return (ambient + diffuse + specular);
 }

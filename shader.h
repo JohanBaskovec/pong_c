@@ -4,8 +4,9 @@
 
 GLuint
 programCreate(
-        char const *vertexShader,
-        char const *fragmentShader
+        char const *vertexShaderFileName
+        , char const *fragmentShaderFileName
+        , char const *geometricShaderFileName
 );
 
 typedef struct MaterialVars {
@@ -35,11 +36,13 @@ typedef struct CubeProgram {
     GLint modelInverse;
     GLint view;
     GLint projection;
+    GLint depthMap;
 
     GLint cameraPosition;
 
     MaterialVars material;
     LightVars pointLights[LIGHTS_N];
+    GLint farPlane;
 } CubeProgram;
 
 
@@ -58,5 +61,17 @@ typedef struct LightProgram {
 
 LightProgram
 lightProgramCreate();
+
+typedef struct ShadowsDepthProgram {
+    GLuint id;
+    GLint lightPos;
+    GLint farPlane;
+    GLint shadowMatrices[6];
+    GLint aPos;
+    GLint model;
+} ShadowsDepthProgram;
+
+ShadowsDepthProgram
+shadowsDepthProgramCreate();
 
 #endif

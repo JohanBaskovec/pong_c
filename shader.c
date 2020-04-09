@@ -46,17 +46,20 @@ GLuint createShader(
 
 GLuint
 programCreate(
-        char const *vertexShaderFileName,
-        char const *fragmentShaderFileName
+        char const *vertexShaderFileName
+        , char const *fragmentShaderFileName
+        , char const *geometricShaderFileName
 ) {
     char *vsSrc;
     char *fsSrc;
+    char *gsSrc;
 
     readShaderSource(vertexShaderFileName, &vsSrc);
     readShaderSource(fragmentShaderFileName, &fsSrc);
 
     GLuint program = glCreateProgram();
 
+    SDL_Log("Creating vertex shader from %s...", vertexShaderFileName);
     GLuint vertexShader = createShader(
             GL_VERTEX_SHADER
             , &vsSrc
@@ -64,12 +67,25 @@ programCreate(
     );
     SDL_Log("Created vertex shader from %s.", vertexShaderFileName);
 
+    SDL_Log("Creating fragment shader from %s...", fragmentShaderFileName);
     GLuint fragmentShader = createShader(
             GL_FRAGMENT_SHADER
             , &fsSrc
             , program
     );
     SDL_Log("Created fragment shader from %s.", fragmentShaderFileName);
+
+    GLuint geometricShader;
+    if (geometricShaderFileName != NULL) {
+        readShaderSource(geometricShaderFileName, &gsSrc);
+        SDL_Log("Creating geometric shader from %s...", geometricShaderFileName);
+        geometricShader = createShader(
+                GL_GEOMETRY_SHADER
+                , &gsSrc
+                , program
+        );
+        SDL_Log("Created geometric shader from %s.", geometricShaderFileName);
+    }
 
     glLinkProgram(program);
 
@@ -84,6 +100,9 @@ programCreate(
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    if (geometricShaderFileName != NULL) {
+        glDeleteShader(geometricShader);
+    }
 
     SDL_Log("Created program %d.\n", program);
     return program;
@@ -119,18 +138,20 @@ CubeProgram
 cubeProgramCreate() {
     CubeProgram p;
     SDL_Log("Creating cube program.\n");
-    p.id = programCreate("cube.vs", "cube.fs");
+    p.id = programCreate("cube.vs", "cube.fs", NULL);
     glUseProgram(p.id);
 
     SET_ATTRIB_LOCATION(aPos);
     SET_ATTRIB_LOCATION(aNormal);
     SET_ATTRIB_LOCATION(aTexCoords);
 
+    SET_UNIFORM_LOCATION(farPlane);
     SET_UNIFORM_LOCATION(model);
     SET_UNIFORM_LOCATION(modelInverse);
     SET_UNIFORM_LOCATION(projection);
     SET_UNIFORM_LOCATION(view);
     SET_UNIFORM_LOCATION(cameraPosition);
+    SET_UNIFORM_LOCATION(depthMap);
 
     // longest string could be "light[100].quadratic"
     size_t bufferSize = 25;
@@ -158,7 +179,7 @@ LightProgram
 lightProgramCreate() {
     LightProgram p;
     SDL_Log("Creating cube program.\n");
-    p.id = programCreate("light.vs", "light.fs");
+    p.id = programCreate("light.vs", "light.fs", NULL);
     glUseProgram(p.id);
 
     SET_ATTRIB_LOCATION(aPos);
@@ -172,3 +193,28 @@ lightProgramCreate() {
     return p;
 }
 
+
+ShadowsDepthProgram
+shadowsDepthProgramCreate() {
+    ShadowsDepthProgram p;
+    SDL_Log("Creating shadows depth program.\n");
+    p.id = programCreate("shadows_depth.vs", "shadows_depth.fs", "shadows_depth.gs");
+    glUseProgram(p.id);
+
+    SET_ATTRIB_LOCATION(aPos);
+
+    SET_UNIFORM_LOCATION(model);
+    SET_UNIFORM_LOCATION(lightPos);
+    SET_UNIFORM_LOCATION(farPlane);
+
+    SET_UNIFORM_LOCATION(shadowMatrices[0]);
+    SET_UNIFORM_LOCATION(shadowMatrices[1]);
+    SET_UNIFORM_LOCATION(shadowMatrices[2]);
+    SET_UNIFORM_LOCATION(shadowMatrices[3]);
+    SET_UNIFORM_LOCATION(shadowMatrices[4]);
+    SET_UNIFORM_LOCATION(shadowMatrices[5]);
+
+    glUseProgram(0);
+    SDL_Log("Shadows depth program created.\n");
+    return p;
+}

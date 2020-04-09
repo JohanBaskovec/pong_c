@@ -34,7 +34,6 @@ void
 mouseMove(SDL_MouseMotionEvent e) {
     float xOffset = e.xrel * mouseSensitivity;
     float yOffset = -e.yrel * mouseSensitivity;
-    printf("%f %f\n", xOffset, yOffset);
     camera.yaw += xOffset;
     camera.pitch += yOffset;
     updateCameraVector();
@@ -42,7 +41,6 @@ mouseMove(SDL_MouseMotionEvent e) {
 
 void
 keyDown(SDL_KeyboardEvent *e) {
-    SDL_Log("Pressed key\n");
     switch (e->keysym.scancode) {
         case SDL_SCANCODE_ESCAPE:
             pressedKeys.escape = true;
@@ -68,7 +66,8 @@ keyDown(SDL_KeyboardEvent *e) {
             pressedKeys.cameraLeft = true;
             break;
         default:
-            SDL_Log("Unsupported key pressed.\n");
+            // do nothing
+            break;
     }
 }
 
@@ -99,7 +98,8 @@ keyUp(SDL_KeyboardEvent *e) {
             pressedKeys.cameraLeft = false;
             break;
         default:
-            SDL_Log("Unsupported key pressed.\n");
+            // do nothing
+            break;
     }
 }
 

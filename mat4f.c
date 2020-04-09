@@ -174,23 +174,23 @@ Mat4f
 mat4fMulMat4f(Mat4f a, Mat4f b) {
     Mat4f ret;
     ret.m00 = a.m00*b.m00 + a.m10*b.m01 + a.m20*b.m02 + a.m30*b.m03;
-    ret.m01 = a.m00*b.m10 + a.m10*b.m11 + a.m20*b.m12 + a.m30*b.m13;
-    ret.m02 = a.m00*b.m20 + a.m10*b.m21 + a.m20*b.m22 + a.m30*b.m23;
-    ret.m03 = a.m00*b.m30 + a.m10*b.m31 + a.m20*b.m32 + a.m30*b.m33;
+    ret.m10 = a.m00*b.m10 + a.m10*b.m11 + a.m20*b.m12 + a.m30*b.m13;
+    ret.m20 = a.m00*b.m20 + a.m10*b.m21 + a.m20*b.m22 + a.m30*b.m23;
+    ret.m30 = a.m00*b.m30 + a.m10*b.m31 + a.m20*b.m32 + a.m30*b.m33;
 
-    ret.m10 = a.m01*b.m00 + a.m11*b.m01 + a.m21*b.m02 + a.m31*b.m03;
+    ret.m01 = a.m01*b.m00 + a.m11*b.m01 + a.m21*b.m02 + a.m31*b.m03;
     ret.m11 = a.m01*b.m10 + a.m11*b.m11 + a.m21*b.m12 + a.m31*b.m13;
-    ret.m12 = a.m01*b.m20 + a.m11*b.m21 + a.m21*b.m22 + a.m31*b.m23;
-    ret.m13 = a.m01*b.m30 + a.m11*b.m31 + a.m21*b.m32 + a.m31*b.m33;
+    ret.m21 = a.m01*b.m20 + a.m11*b.m21 + a.m21*b.m22 + a.m31*b.m23;
+    ret.m31 = a.m01*b.m30 + a.m11*b.m31 + a.m21*b.m32 + a.m31*b.m33;
 
-    ret.m20 = a.m02*b.m00 + a.m12*b.m01 + a.m22*b.m02 + a.m32*b.m03;
-    ret.m21 = a.m02*b.m10 + a.m12*b.m11 + a.m22*b.m12 + a.m32*b.m13;
+    ret.m02 = a.m02*b.m00 + a.m12*b.m01 + a.m22*b.m02 + a.m32*b.m03;
+    ret.m12 = a.m02*b.m10 + a.m12*b.m11 + a.m22*b.m12 + a.m32*b.m13;
     ret.m22 = a.m02*b.m20 + a.m12*b.m21 + a.m22*b.m22 + a.m32*b.m23;
-    ret.m23 = a.m02*b.m30 + a.m12*b.m31 + a.m22*b.m32 + a.m32*b.m33;
+    ret.m32 = a.m02*b.m30 + a.m12*b.m31 + a.m22*b.m32 + a.m32*b.m33;
 
-    ret.m30 = a.m03*b.m00 + a.m13*b.m01 + a.m23*b.m02 + a.m33*b.m03;
-    ret.m31 = a.m03*b.m10 + a.m13*b.m11 + a.m23*b.m12 + a.m33*b.m13;
-    ret.m32 = a.m03*b.m20 + a.m13*b.m21 + a.m23*b.m22 + a.m33*b.m23;
+    ret.m03 = a.m03*b.m00 + a.m13*b.m01 + a.m23*b.m02 + a.m33*b.m03;
+    ret.m13 = a.m03*b.m10 + a.m13*b.m11 + a.m23*b.m12 + a.m33*b.m13;
+    ret.m23 = a.m03*b.m20 + a.m13*b.m21 + a.m23*b.m22 + a.m33*b.m23;
     ret.m33 = a.m03*b.m30 + a.m13*b.m31 + a.m23*b.m32 + a.m33*b.m33;
     return ret;
 }
