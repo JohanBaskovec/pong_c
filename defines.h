@@ -1,2 +1,2 @@
 #define PADDLES_N 2
-#define LIGHTS_N 1
+#define LIGHTS_N 2

@@ -151,7 +151,8 @@ cubeProgramCreate() {
     SET_UNIFORM_LOCATION(projection);
     SET_UNIFORM_LOCATION(view);
     SET_UNIFORM_LOCATION(cameraPosition);
-    SET_UNIFORM_LOCATION(depthMap);
+    SET_UNIFORM_LOCATION(depthMap0);
+    SET_UNIFORM_LOCATION(depthMap1);
 
     // longest string could be "light[100].quadratic"
     size_t bufferSize = 25;

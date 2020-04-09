@@ -51,10 +51,10 @@ openglDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 CubeProgram cubeProgram;
 LightProgram lightProgram;
 ShadowsDepthProgram shadowsDepthProgram;
-GLuint depthCubeMap;
+GLuint depthCubeMap[LIGHTS_N];
 GLuint shadowWidth = 1024;
 GLuint shadowHeight = 1024;
-GLuint depthMapFbo;
+GLuint depthMapFbo[LIGHTS_N];
 
 void
 graphicsInit() {
@@ -112,24 +112,26 @@ graphicsInit() {
     shadowsDepthProgram = shadowsDepthProgramCreate();
 
     SDL_Log("%d %d", shadowsDepthProgram.aPos, cubeProgram.aPos);
-    glGenFramebuffers(1, &depthMapFbo);
+    glGenFramebuffers(LIGHTS_N, depthMapFbo);
 
-    glGenTextures(1, &depthCubeMap);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-    for (int i = 0 ; i < 6 ; i++) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glGenTextures(LIGHTS_N, depthCubeMap);
+    for (int i = 0 ; i < LIGHTS_N ; i++) {
+        glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap[i]);
+        for (int i = 0 ; i < 6 ; i++) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        }
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFbo[i]);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubeMap[i], 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFbo);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubeMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
     glGenVertexArrays(1, &cubeVao);
@@ -264,96 +266,99 @@ graphicsRender() {
             , nearPlane
             , farPlane
     );
-    Mat4f shadowTransforms[6];
-
-    Vec3f lp = lightPos[0];
-    // TODO: multi lights
-    Vec3f up0 = {0.0, -1.0, 0.0};
-    Vec3f dir0 = {1.0, 0.0, 0.0};
-    Vec3f target0 = vec3fAdd(lp, dir0);
-    Mat4f lookAt0 = mat4fLookAt(lp, target0, up0);
-    shadowTransforms[0] = mat4fMulMat4f(shadowProj, lookAt0);
-
-    Vec3f up1  = { 0.0, -1.0,  0.0};
-    Vec3f dir1 = {-1.0,  0.0,  0.0};
-    Vec3f target1 = vec3fAdd(lp, dir1);
-    Mat4f lookAt1 = mat4fLookAt(lp, target1, up1);
-    shadowTransforms[1] = mat4fMulMat4f(shadowProj, lookAt1);
-
-    Vec3f up2  = { 0.0,  0.0,  1.0};
-    Vec3f dir2 = { 0.0,  1.0,  0.0};
-    Vec3f target2 = vec3fAdd(lp, dir2);
-    Mat4f lookAt2 = mat4fLookAt(lp, target2, up2);
-    shadowTransforms[2] = mat4fMulMat4f(shadowProj, lookAt2);
-
-    Vec3f up3  = { 0.0,  0.0, -1.0};
-    Vec3f dir3 = { 0.0, -1.0,  0.0};
-    Vec3f target3 = vec3fAdd(lp, dir3);
-    Mat4f lookAt3 = mat4fLookAt(lp, target3, up3);
-    shadowTransforms[3] = mat4fMulMat4f(shadowProj, lookAt3);
-
-    Vec3f up4  = { 0.0, -1.0,  0.0};
-    Vec3f dir4 = { 0.0,  0.0,  1.0};
-    Vec3f target4 = vec3fAdd(lp, dir4);
-    Mat4f lookAt4 = mat4fLookAt(lp, target4, up4);
-    shadowTransforms[4] = mat4fMulMat4f(shadowProj, lookAt4);
-
-    Vec3f up5  = { 0.0, -1.0,  0.0};
-    Vec3f dir5 = { 0.0,  0.0, -1.0};
-    Vec3f target5 = vec3fAdd(lp, dir5);
-    Mat4f lookAt5 = mat4fLookAt(lp, target5, up5);
-    shadowTransforms[5] = mat4fMulMat4f(shadowProj, lookAt5);
 
     // render to depth cubemap
     glViewport(0, 0, shadowWidth, shadowHeight);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFbo);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glUseProgram(shadowsDepthProgram.id);
-    for (int i = 0 ; i < 6 ; i++) {
-        glUniformMatrix4fv(
-                shadowsDepthProgram.shadowMatrices[i]
-                , 1
-                , false
-                , (GLfloat*)&shadowTransforms[i]
-        );
-    }
-    glUniform1f(shadowsDepthProgram.farPlane, farPlane);
-    glUniform3fv(
-            shadowsDepthProgram.lightPos
-            , 1
-            , (GLfloat*)&lp
-    );
+    for (int i = 0 ; i < LIGHTS_N ; i++) {
+        Mat4f shadowTransforms[6];
 
-    // TODO : remove code duplication from normal rendering
-    // the difference between the 2 is the attribute location
-    // (for example shadowsDepthProgram.model instead of cubeProgram.model)
-    // and here we don't render textures
-    glBindVertexArray(cubeVao);
-    for (int i = 0 ; i < PADDLES_N ; i++) {
-        Paddle paddle = paddles[i];
-        Vec3f rotate = {
-            .x = 1.0,
-            .y = 1.0,
-            .z = 0.0
-        };
+        Vec3f lp = lightPos[i];
+        // TODO: multi lights
+        Vec3f up0 = {0.0, -1.0, 0.0};
+        Vec3f dir0 = {1.0, 0.0, 0.0};
+        Vec3f target0 = vec3fAdd(lp, dir0);
+        Mat4f lookAt0 = mat4fLookAt(lp, target0, up0);
+        shadowTransforms[0] = mat4fMulMat4f(shadowProj, lookAt0);
+
+        Vec3f up1  = { 0.0, -1.0,  0.0};
+        Vec3f dir1 = {-1.0,  0.0,  0.0};
+        Vec3f target1 = vec3fAdd(lp, dir1);
+        Mat4f lookAt1 = mat4fLookAt(lp, target1, up1);
+        shadowTransforms[1] = mat4fMulMat4f(shadowProj, lookAt1);
+
+        Vec3f up2  = { 0.0,  0.0,  1.0};
+        Vec3f dir2 = { 0.0,  1.0,  0.0};
+        Vec3f target2 = vec3fAdd(lp, dir2);
+        Mat4f lookAt2 = mat4fLookAt(lp, target2, up2);
+        shadowTransforms[2] = mat4fMulMat4f(shadowProj, lookAt2);
+
+        Vec3f up3  = { 0.0,  0.0, -1.0};
+        Vec3f dir3 = { 0.0, -1.0,  0.0};
+        Vec3f target3 = vec3fAdd(lp, dir3);
+        Mat4f lookAt3 = mat4fLookAt(lp, target3, up3);
+        shadowTransforms[3] = mat4fMulMat4f(shadowProj, lookAt3);
+
+        Vec3f up4  = { 0.0, -1.0,  0.0};
+        Vec3f dir4 = { 0.0,  0.0,  1.0};
+        Vec3f target4 = vec3fAdd(lp, dir4);
+        Mat4f lookAt4 = mat4fLookAt(lp, target4, up4);
+        shadowTransforms[4] = mat4fMulMat4f(shadowProj, lookAt4);
+
+        Vec3f up5  = { 0.0, -1.0,  0.0};
+        Vec3f dir5 = { 0.0,  0.0, -1.0};
+        Vec3f target5 = vec3fAdd(lp, dir5);
+        Mat4f lookAt5 = mat4fLookAt(lp, target5, up5);
+        shadowTransforms[5] = mat4fMulMat4f(shadowProj, lookAt5);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFbo[i]);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glUseProgram(shadowsDepthProgram.id);
+        for (int i = 0 ; i < 6 ; i++) {
+            glUniformMatrix4fv(
+                    shadowsDepthProgram.shadowMatrices[i]
+                    , 1
+                    , false
+                    , (GLfloat*)&shadowTransforms[i]
+            );
+        }
+        glUniform1f(shadowsDepthProgram.farPlane, farPlane);
+        glUniform3fv(
+                shadowsDepthProgram.lightPos
+                , 1
+                , (GLfloat*)&lp
+        );
+
+        // TODO : remove code duplication from normal rendering
+        // the difference between the 2 is the attribute location
+        // (for example shadowsDepthProgram.model instead of cubeProgram.model)
+        // and here we don't render textures
+        glBindVertexArray(cubeVao);
+        for (int i = 0 ; i < PADDLES_N ; i++) {
+            Paddle paddle = paddles[i];
+            Vec3f rotate = {
+                .x = 1.0,
+                .y = 1.0,
+                .z = 0.0
+            };
+            Mat4f modelMat = mat4fIdentity();
+            Vec3f scale = { 0.2, 2.0, 2.0};
+            modelMat = mat4fVec3fTranslate(modelMat, paddle.position);
+            //modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.05), rotate);
+            modelMat = mat4fScale(modelMat, scale);
+            glUniformMatrix4fv(shadowsDepthProgram.model, 1, false, (GLfloat*)&modelMat);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        glBindVertexArray(floorVao);
         Mat4f modelMat = mat4fIdentity();
-        Vec3f scale = { 0.2, 2.0, 2.0};
-        modelMat = mat4fVec3fTranslate(modelMat, paddle.position);
-        //modelMat = mat4fVec3fRotate(modelMat, SDL_GetTicks() * degreesToRadians(-0.05), rotate);
-        modelMat = mat4fScale(modelMat, scale);
+        modelMat = mat4fVec3fTranslate(modelMat, floorPos);
         glUniformMatrix4fv(shadowsDepthProgram.model, 1, false, (GLfloat*)&modelMat);
 
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-
-    glBindVertexArray(floorVao);
-    Mat4f modelMat = mat4fIdentity();
-    modelMat = mat4fVec3fTranslate(modelMat, floorPos);
-    glUniformMatrix4fv(shadowsDepthProgram.model, 1, false, (GLfloat*)&modelMat);
-
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
     // render normally
@@ -384,13 +389,15 @@ graphicsRender() {
     glUniform1i(cubeProgram.material.specular, 1);
     glUniform1f(cubeProgram.material.shininess, 64.0);
 
-    // why 1???
-    glUniform1i(cubeProgram.depthMap, 1);
+    glUniform1i(cubeProgram.depthMap0, 1);
+    glUniform1i(cubeProgram.depthMap1, 2);
     glBindVertexArray(cubeVao);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, paddleTexture);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap[0]);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap[1]);
     for (int i = 0 ; i < PADDLES_N ; i++) {
         Paddle paddle = paddles[i];
         Vec3f rotate = {
@@ -415,7 +422,7 @@ graphicsRender() {
     glBindVertexArray(floorVao);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, woodTexture0);
-    modelMat = mat4fIdentity();
+    Mat4f modelMat = mat4fIdentity();
     modelMat = mat4fVec3fTranslate(modelMat, floorPos);
     glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
 

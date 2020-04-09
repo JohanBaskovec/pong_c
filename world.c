@@ -17,11 +17,11 @@ worldInit() {
     lightPos[0].z = 1.0;
     lightPos[0].y = 1.0;
 
-    /*
     lightPos[1].x = 2.0;
     lightPos[1].y = -1.0;
     lightPos[1].z = -1.0;
 
+    /*
     lightPos[2].x = -3.0;
     lightPos[2].z = -2.0;
     */

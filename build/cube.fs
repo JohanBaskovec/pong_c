@@ -26,10 +26,11 @@ out vec4 FragColor;
 uniform vec3 cameraPosition;
 uniform Material material;
 
-#define LIGHTS_N 1
+#define LIGHTS_N 2
 uniform Light pointLights[LIGHTS_N];
 
-uniform samplerCube depthMap;
+uniform samplerCube depthMap0;
+uniform samplerCube depthMap1;
 uniform float farPlane;
 uniform bool shadows;
 
@@ -45,9 +46,9 @@ vec3 gridSamplingDisk[20] = vec3[]
 
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
-float ShadowCalculation(vec3 fragPos)
+float ShadowCalculationSingleLight(vec3 fragPos, Light light, samplerCube depthMap)
 {
-    vec3 fragToLight = fragPos - pointLights[0].position;
+    vec3 fragToLight = fragPos - light.position;
 
     float currentDepth = length(fragToLight);
     float shadow = 0.0;
@@ -63,15 +64,11 @@ float ShadowCalculation(vec3 fragPos)
             shadow += 1.0;
     }
     shadow /= float(samples);
-
-/*
-    shadow = 0.0;
-    float closestDepth = texture(depthMap, fragToLight).r;
-    if(currentDepth - bias > closestDepth)
-        shadow += 1.0;
-        */
-    
     return shadow;
+}
+float ShadowCalculation(vec3 fragPos)
+{
+    return min(ShadowCalculationSingleLight(fragPos, pointLights[0], depthMap0), ShadowCalculationSingleLight(fragPos, pointLights[1], depthMap1));
 }
 
 void main()
