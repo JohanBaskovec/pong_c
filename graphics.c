@@ -256,7 +256,7 @@ graphicsRender() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // create depth cube transformation matrices
-    float nearPlane = 1.0;
+    float nearPlane = 0.1;
     float farPlane = 25.0;
     Mat4f shadowProj = mat4fPerspective(
             degreesToRadians(90.0)
@@ -343,9 +343,6 @@ graphicsRender() {
         modelMat = mat4fScale(modelMat, scale);
         glUniformMatrix4fv(shadowsDepthProgram.model, 1, false, (GLfloat*)&modelMat);
 
-        Mat4f modelInverseMat = mat4fInverse(modelMat);
-        glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
-
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
@@ -353,9 +350,6 @@ graphicsRender() {
     Mat4f modelMat = mat4fIdentity();
     modelMat = mat4fVec3fTranslate(modelMat, floorPos);
     glUniformMatrix4fv(shadowsDepthProgram.model, 1, false, (GLfloat*)&modelMat);
-
-    Mat4f modelInverseMat = mat4fInverse(modelMat);
-    glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -411,7 +405,7 @@ graphicsRender() {
         modelMat = mat4fScale(modelMat, scale);
         glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
 
-        modelInverseMat = mat4fInverse(modelMat);
+        Mat4f modelInverseMat = mat4fInverse(modelMat);
         glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
 
 
@@ -425,12 +419,11 @@ graphicsRender() {
     modelMat = mat4fVec3fTranslate(modelMat, floorPos);
     glUniformMatrix4fv(cubeProgram.model, 1, false, (GLfloat*)&modelMat);
 
-    modelInverseMat = mat4fInverse(modelMat);
+    Mat4f modelInverseMat = mat4fInverse(modelMat);
     glUniformMatrix4fv(cubeProgram.modelInverse, 1, false, (GLfloat*)&modelInverseMat);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    /*
     glUseProgram(lightProgram.id);
     glUniformMatrix4fv(lightProgram.view, 1, false, (GLfloat*)&viewMat);
     glUniformMatrix4fv(lightProgram.projection, 1, false, (GLfloat*)&projectionMat);
@@ -444,7 +437,6 @@ graphicsRender() {
         glBindVertexArray(lightVao);
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
-    */
 
     glBindVertexArray(0);
     glUseProgram(0);
