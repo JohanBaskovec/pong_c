@@ -90,6 +90,8 @@ void main()
 
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
+    vec3 color = texture(material.diffuse, TexCoords).rgb;
+
     vec3 lightDir = normalize(light.position - fragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
     // diffuse shading
@@ -106,7 +108,7 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
     // combine results
     float gamma = 2.2;
     vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoords));
-    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, TexCoords));
+    vec3 diffuse  = light.diffuse  * diff;// * vec3(texture(material.diffuse, TexCoords));
     vec3 specular = light.specular * spec;// * vec3(texture(material.specular, TexCoords));
     ambient  *= attenuation;
     diffuse  *= attenuation;
@@ -114,7 +116,7 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 
     //float shadow = ShadowCalculation(FragPos) * 0.0;
     float shadow = ShadowCalculation(FragPos);
-    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular));
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     return lighting;
     //return (ambient + diffuse + specular);
 }

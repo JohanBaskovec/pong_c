@@ -58,6 +58,7 @@ GLuint depthMapFbo;
 
 void
 graphicsInit() {
+    SDL_Log("Loading...");
     screenRatio = (screenWidth * 1.0) / screenHeight;
     fovRadians = degreesToRadians(fovDegree);
     int err = SDL_Init(SDL_INIT_VIDEO);
@@ -246,6 +247,7 @@ graphicsInit() {
     SDL_Log("OpengL: available image units = %d\n",  GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     SDL_SetRelativeMouseMode(true);
 
+    SDL_Log("Loading done.");
 }
 
 void

@@ -3,7 +3,25 @@
 #include "camera.h"
 
 float mouseSensitivity = 0.1f;
-PressedKeys pressedKeys;
+bool pressedKeys[KEY_NUMBER];
+Key keyMapping[SDL_NUM_SCANCODES];
+
+void
+inputInit() {
+    keyMapping[SDL_SCANCODE_ESCAPE] = KEY_ESCAPE;
+
+    keyMapping[SDL_SCANCODE_S] =     KEY_PADDLE_MOVE_DOWN;
+    keyMapping[SDL_SCANCODE_W] =     KEY_PADDLE_MOVE_UP;
+    keyMapping[SDL_SCANCODE_A] =     KEY_PADDLE_MOVE_LEFT;
+    keyMapping[SDL_SCANCODE_D] =     KEY_PADDLE_MOVE_RIGHT;
+    keyMapping[SDL_SCANCODE_Q] =     KEY_PADDLE_MOVE_BACK;
+    keyMapping[SDL_SCANCODE_E] =     KEY_PADDLE_MOVE_FRONT;
+
+    keyMapping[SDL_SCANCODE_UP] =    KEY_CAMERA_MOVE_FRONT;
+    keyMapping[SDL_SCANCODE_RIGHT] = KEY_CAMERA_MOVE_RIGHT;
+    keyMapping[SDL_SCANCODE_DOWN] =  KEY_CAMERA_MOVE_BACK;
+    keyMapping[SDL_SCANCODE_LEFT] =  KEY_CAMERA_MOVE_LEFT;
+}
 
 void
 inputPollEvents() {
@@ -11,7 +29,7 @@ inputPollEvents() {
     while(SDL_PollEvent(&e)) {
         switch (e.type) {
             case SDL_QUIT:
-                pressedKeys.escape = true;
+                pressedKeys[KEY_ESCAPE] = true;
                 break;
             case SDL_KEYDOWN:
                 keyDown(&e.key);
@@ -41,67 +59,13 @@ mouseMove(SDL_MouseMotionEvent e) {
 
 void
 keyDown(SDL_KeyboardEvent *e) {
-    switch (e->keysym.scancode) {
-        case SDL_SCANCODE_ESCAPE:
-            pressedKeys.escape = true;
-            break;
-        case SDL_SCANCODE_S:
-            pressedKeys.down = true;
-            break;
-        case SDL_SCANCODE_W:
-            pressedKeys.up = true;
-            break;
-        case SDL_SCANCODE_UP:
-            //pressedKeys.cameraUp = true;
-            pressedKeys.cameraFront = true;
-            break;
-        case SDL_SCANCODE_RIGHT:
-            pressedKeys.cameraRight = true;
-            break;
-        case SDL_SCANCODE_DOWN:
-            //pressedKeys.cameraDown = true;
-            pressedKeys.cameraBack = true;
-            break;
-        case SDL_SCANCODE_LEFT:
-            pressedKeys.cameraLeft = true;
-            break;
-        default:
-            // do nothing
-            break;
-    }
+    Key pressedKey = keyMapping[e->keysym.scancode];
+    pressedKeys[pressedKey] = true;
 }
 
 void
 keyUp(SDL_KeyboardEvent *e) {
-    switch (e->keysym.scancode) {
-        case SDL_SCANCODE_ESCAPE:
-            pressedKeys.escape = false;
-            break;
-        case SDL_SCANCODE_S:
-            pressedKeys.down = false;
-            break;
-        case SDL_SCANCODE_W:
-            pressedKeys.up = false;
-            break;
-        case SDL_SCANCODE_UP:
-            //pressedKeys.cameraUp = false;
-            pressedKeys.cameraFront = false;
-            break;
-        case SDL_SCANCODE_RIGHT:
-            pressedKeys.cameraRight = false;
-            break;
-        case SDL_SCANCODE_DOWN:
-            //pressedKeys.cameraDown = false;
-            pressedKeys.cameraBack = false;
-            break;
-        case SDL_SCANCODE_LEFT:
-            pressedKeys.cameraLeft = false;
-            break;
-        default:
-            // do nothing
-            break;
-    }
+    Key releasedKey = keyMapping[e->keysym.scancode];
+    pressedKeys[releasedKey] = false;
 }
-
-
 
