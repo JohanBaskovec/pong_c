@@ -36,13 +36,12 @@ typedef struct CubeProgram {
     GLint modelInverse;
     GLint view;
     GLint projection;
-    GLint depthMap0;
-    GLint depthMap1;
+    GLint depthMap;
 
     GLint cameraPosition;
 
     MaterialVars material;
-    LightVars pointLights[LIGHTS_N];
+    LightVars pointLight;
     GLint farPlane;
 } CubeProgram;
 

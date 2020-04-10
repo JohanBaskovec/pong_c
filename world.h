@@ -1,19 +1,30 @@
 #ifndef PONG_WORLD
 #define PONG_WORLD
+#include <stdbool.h>
+
 #include "vec3f.h"
 #include "defines.h"
+#include "ball.h"
+#include "paddle.h"
+#include "wall.h"
 
-typedef struct Paddle {
-    Vec3f position;
-} Paddle;
+typedef struct World {
+    Paddle paddles[PADDLES_N];
 
-extern Paddle paddles[PADDLES_N];
+    Ball ball;
 
-extern Vec3f lightPos[LIGHTS_N];
+    Wall walls[WALLS_N];
 
-extern Vec3f floorPos;
+    bool ballMoving;
+
+    bool paused;
+} World;
+
+extern World world;
 
 void
 worldInit();
 
+void
+worldUpdate();
 #endif

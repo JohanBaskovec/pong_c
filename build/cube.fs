@@ -26,11 +26,9 @@ out vec4 FragColor;
 uniform vec3 cameraPosition;
 uniform Material material;
 
-#define LIGHTS_N 2
-uniform Light pointLights[LIGHTS_N];
+uniform Light pointLight;
 
-uniform samplerCube depthMap0;
-uniform samplerCube depthMap1;
+uniform samplerCube depthMap;
 uniform float farPlane;
 uniform bool shadows;
 
@@ -46,9 +44,9 @@ vec3 gridSamplingDisk[20] = vec3[]
 
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
-float ShadowCalculationSingleLight(vec3 fragPos, Light light, samplerCube depthMap)
+float ShadowCalculation(vec3 fragPos)
 {
-    vec3 fragToLight = fragPos - light.position;
+    vec3 fragToLight = fragPos - pointLight.position;
 
     float currentDepth = length(fragToLight);
     float shadow = 0.0;
@@ -66,19 +64,13 @@ float ShadowCalculationSingleLight(vec3 fragPos, Light light, samplerCube depthM
     shadow /= float(samples);
     return shadow;
 }
-float ShadowCalculation(vec3 fragPos)
-{
-    return min(ShadowCalculationSingleLight(fragPos, pointLights[0], depthMap0), ShadowCalculationSingleLight(fragPos, pointLights[1], depthMap1));
-}
 
 void main()
 {
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(cameraPosition - FragPos);
 
-    vec3 result = vec3(0, 0, 0);
-    for(int i = 0; i < LIGHTS_N; i++)
-        result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
+    vec3 result = CalcPointLight(pointLight, norm, FragPos, viewDir);
 
     float gamma = 2.2;
     vec3 color = pow(result, vec3(1.0/gamma));
@@ -104,16 +96,14 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 
     // combine results
     float gamma = 2.2;
-    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoords));
-    vec3 diffuse  = light.diffuse  * diff;// * vec3(texture(material.diffuse, TexCoords));
-    vec3 specular = light.specular * spec;// * vec3(texture(material.specular, TexCoords));
-    ambient  *= attenuation;
+    vec3 ambient  = light.ambient;
+    vec3 diffuse  = light.diffuse  * diff;
+    vec3 specular = light.specular * spec;
     diffuse  *= attenuation;
     specular *= attenuation;
 
-    //float shadow = ShadowCalculation(FragPos) * 0.0;
     float shadow = ShadowCalculation(FragPos);
+
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
     return lighting;
-    //return (ambient + diffuse + specular);
 }

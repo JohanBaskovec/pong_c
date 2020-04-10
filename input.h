@@ -19,6 +19,10 @@ typedef enum Key {
     , KEY_CAMERA_MOVE_FRONT
     , KEY_CAMERA_MOVE_BACK
 
+    , KEY_BALL_STOP
+    , KEY_BALL_INCREASE_SPEED
+    , KEY_BALL_DECREASE_SPEED
+
     , KEY_NUMBER
 } Key;
 

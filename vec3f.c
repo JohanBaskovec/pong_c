@@ -1,6 +1,8 @@
 #include <math.h>
 #include "vec3f.h"
 
+Vec3f vec3fZero = {0, 0, 0};
+
 float
 vec3fLength(Vec3f vec) {
     return sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);

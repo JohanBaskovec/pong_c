@@ -151,21 +151,18 @@ cubeProgramCreate() {
     SET_UNIFORM_LOCATION(projection);
     SET_UNIFORM_LOCATION(view);
     SET_UNIFORM_LOCATION(cameraPosition);
-    SET_UNIFORM_LOCATION(depthMap0);
-    SET_UNIFORM_LOCATION(depthMap1);
+    SET_UNIFORM_LOCATION(depthMap);
 
     // longest string could be "light[100].quadratic"
     size_t bufferSize = 25;
     char str[bufferSize];
-    for (int i = 0 ; i < LIGHTS_N ; i++) {
-        SET_UNIFORM_LOCATION_ARRAY(pointLights, position);
-        SET_UNIFORM_LOCATION_ARRAY(pointLights, ambient);
-        SET_UNIFORM_LOCATION_ARRAY(pointLights, diffuse);
-        SET_UNIFORM_LOCATION_ARRAY(pointLights, specular);
-        SET_UNIFORM_LOCATION_ARRAY(pointLights, constant);
-        SET_UNIFORM_LOCATION_ARRAY(pointLights, linear);
-        SET_UNIFORM_LOCATION_ARRAY(pointLights, quadratic);
-    }
+    SET_UNIFORM_LOCATION(pointLight.position);
+    SET_UNIFORM_LOCATION(pointLight.ambient);
+    SET_UNIFORM_LOCATION(pointLight.diffuse);
+    SET_UNIFORM_LOCATION(pointLight.specular);
+    SET_UNIFORM_LOCATION(pointLight.constant);
+    SET_UNIFORM_LOCATION(pointLight.linear);
+    SET_UNIFORM_LOCATION(pointLight.quadratic);
 
     SET_UNIFORM_LOCATION(material.diffuse);
     SET_UNIFORM_LOCATION(material.specular);

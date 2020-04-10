@@ -29,6 +29,9 @@ set(SOURCES
     vec3f.c
     fs.c
     vec4f.c
+    ball.c
+    paddle.c
+    wall.c
 )
 
 add_executable(pong

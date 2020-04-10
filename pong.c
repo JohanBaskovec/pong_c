@@ -25,23 +25,33 @@ int main(int argc, char *argv[]) {
 
         inputPollEvents();
 
+        worldUpdate();
+
         if (pressedKeys[KEY_ESCAPE]) {
             goto end;
         }
         if (pressedKeys[KEY_PADDLE_MOVE_UP]) {
-            paddles[0].position.y += movementSpeed;
+            world.paddles[0].position.y += movementSpeed;
         } else if (pressedKeys[KEY_PADDLE_MOVE_DOWN]) {
-            paddles[0].position.y -= movementSpeed;
+            world.paddles[0].position.y -= movementSpeed;
         }
         if (pressedKeys[KEY_PADDLE_MOVE_LEFT]) {
-            paddles[0].position.x -= movementSpeed;
+            world.paddles[0].position.x -= movementSpeed;
         } else if (pressedKeys[KEY_PADDLE_MOVE_RIGHT]) {
-            paddles[0].position.x += movementSpeed;
+            world.paddles[0].position.x += movementSpeed;
         }
         if (pressedKeys[KEY_PADDLE_MOVE_BACK]) {
-            paddles[0].position.z -= movementSpeed;
+            world.paddles[0].position.z -= movementSpeed;
         } else if (pressedKeys[KEY_PADDLE_MOVE_FRONT]) {
-            paddles[0].position.z += movementSpeed;
+            world.paddles[0].position.z += movementSpeed;
+        }
+        if (pressedKeys[KEY_BALL_STOP]) {
+            world.ball.moving = !world.ball.moving;
+        }
+        if (pressedKeys[KEY_BALL_DECREASE_SPEED]) {
+            world.ball.velocity = vec3fMulf(world.ball.velocity, 0.95);
+        } else if (pressedKeys[KEY_BALL_INCREASE_SPEED]) {
+            world.ball.velocity = vec3fMulf(world.ball.velocity, 1.05);
         }
         if (pressedKeys[KEY_CAMERA_MOVE_BACK]) {
             camera.position.x -= movementSpeed * camera.front.x;
