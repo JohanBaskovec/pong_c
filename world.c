@@ -5,12 +5,13 @@
 #include <stdbool.h>
 #include "maths.h"
 #include <math.h>
+#include "error.h"
 
 
 World world;
 
-float defaultBallSpeed = 0.2;
-Vec3f defaultBallPosition = {0, 0, -3};
+float defaultBallSpeed = 0.15;
+Vec3f defaultBallPosition = {-0, -0, -3};
 
 typedef enum HorizontalBallDirection {
     BALL_HORIZONTAL_DIRECTION_RANDOM,
@@ -19,7 +20,11 @@ typedef enum HorizontalBallDirection {
 } HorizontalBallDirection;
 
 void
-ballInit(HorizontalBallDirection horizontalDirection, bool randomYDirection) {
+ballInit(
+        HorizontalBallDirection horizontalDirection
+        , bool randomVerticalDirection
+        , float verticalDirection
+) {
     world.ball = ballCreate();
 
     Ball *ball = &world.ball;
@@ -28,17 +33,29 @@ ballInit(HorizontalBallDirection horizontalDirection, bool randomYDirection) {
     if (horizontalDirection == BALL_HORIZONTAL_DIRECTION_RANDOM) {
         int d = rand() % 2;
         if (d == 0) {
-            ball->velocity.x = -defaultBallSpeed;
+            horizontalDirection = BALL_HORIZONTAL_DIRECTION_RIGHT;
         } else {
-            ball->velocity.x = defaultBallSpeed;
+            horizontalDirection = BALL_HORIZONTAL_DIRECTION_LEFT;
         }
     }
-    if (randomYDirection) {
+    switch (horizontalDirection) {
+        case BALL_HORIZONTAL_DIRECTION_LEFT:
+            ball->velocity.x = -defaultBallSpeed;
+            break;
+        case BALL_HORIZONTAL_DIRECTION_RIGHT:
+            ball->velocity.x = defaultBallSpeed;
+            break;
+        default:
+            fatalError("Error, invalid ball horizontal direction");
+    }
+    if (randomVerticalDirection) {
         ball->velocity.y = ((rand() % 1000) / 1000.0f) * defaultBallSpeed;
         bool negative = rand() % 2;
         if (negative) {
             ball->velocity.y = -ball->velocity.y;
         }
+    } else {
+        ball->velocity.y = verticalDirection * defaultBallSpeed;
     }
     ball->velocity = vec3fMulf(vec3fNormalize(ball->velocity), defaultBallSpeed);
 }
@@ -92,7 +109,7 @@ worldInit() {
         world.walls[4] = wallCreate(pos, size);
     }
 
-    ballInit(BALL_HORIZONTAL_DIRECTION_RANDOM, true);
+    ballInit(BALL_HORIZONTAL_DIRECTION_RANDOM, false, 0);
 }
 
 bool checkBoxesIntersest(
@@ -126,32 +143,60 @@ bool checkBoxesIntersest(
 void ballUpdate() {
     Ball *ball = &world.ball;
     if (ball->moving) {
-        ball->position.x += ball->velocity.x;
-        ball->position.y += ball->velocity.y;
+        Vec3f tempPosition = vec3fAdd(ball->position, ball->velocity);;
+        bool collision = false;
 
         for (int i = 0 ; i < PADDLES_N ; i++) {
             Paddle *paddle = &world.paddles[i];
             bool collision = checkBoxesIntersest(
-                    ball->position
+                    tempPosition
                     , ball->size
                     , paddle->position
                     , paddle->size
             );
             if (collision) {
-                ball->velocity.x = -ball->velocity.x;
+                collision = true;
+                ball->velocity.x *= -1;
                 ball->shooter = i;
+
+                float paddleTop = paddle->position.y + paddle->size.y / 2;
+                float paddleBottom = paddle->position.y - paddle->size.y / 2;
+                float collisionMaxY = paddleTop + ball->size.y / 2.0;
+                float collisionMinY = paddleBottom - ball->size.y / 2.0;
+
+                float yDistance = tempPosition.y - collisionMinY;
+                float yDistancePercent = yDistance / (collisionMaxY - collisionMinY);
+                // mx + b
+                float m = -2/0.5;
+                float b = 2;
+                float yVelocity;
+                float mbx;
+                if (yDistancePercent > 0.5) {
+                    yDistancePercent -= 0.5;
+                    mbx = (m * yDistancePercent + b);
+                    yVelocity = defaultBallSpeed * mbx;
+                } else if (yDistancePercent < 0.5) {
+                    mbx = (m * yDistancePercent + b);
+                    yVelocity = -defaultBallSpeed * mbx;
+                } else {
+                    yVelocity = 0;
+                }
+                ball->velocity.y = yVelocity;
+                ball->velocity = vec3fMulf(vec3fNormalize(ball->velocity), defaultBallSpeed);
+                break;
             }
         }
 
         for (int i = 0 ; i < WALLS_N ; i++) {
             Wall *wall = &world.walls[i];
             bool collision = checkBoxesIntersest(
-                    ball->position
+                    tempPosition
                     , ball->size
                     , wall->position
                     , wall->size
             );
             if (collision) {
+                collision = true;
                 if (wall->playerIndex != -1) {
                     if (ball->shooter != -1) {
                         int playerIndex = wall->playerIndex;
@@ -164,13 +209,16 @@ void ballUpdate() {
                                 , world.paddles[1].score
                         );
                     }
-                    ballInit(BALL_HORIZONTAL_DIRECTION_RANDOM, true);
+                    ballInit(BALL_HORIZONTAL_DIRECTION_RANDOM, true, 0);
                     return;
                 }
 
                 ball->velocity.y = -ball->velocity.y;
             }
         }
+
+        tempPosition = vec3fAdd(ball->position, ball->velocity);;
+        ball->position = tempPosition;
     }
 }
 
